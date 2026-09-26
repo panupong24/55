@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import confetti from 'canvas-confetti';
 import { motion } from 'motion/react';
-import { RotateCcw, Share2, Sparkles, Check, Trophy, Quote } from 'lucide-react';
+import { RotateCcw, Share2, Sparkles, Check, Trophy, Quote, QrCode, Copy } from 'lucide-react';
 import { QuizResultTier } from '../types';
 import { sound } from '../utils/audio';
 
@@ -9,12 +9,14 @@ interface Props {
   percentage: number;
   tier: QuizResultTier;
   onRestart: () => void;
+  onOpenShare?: () => void;
 }
 
 export const ResultScreen: React.FC<Props> = ({
   percentage,
   tier,
   onRestart,
+  onOpenShare,
 }) => {
   const [animatedScore, setAnimatedScore] = useState(0);
   const [copied, setCopied] = useState(false);
@@ -74,7 +76,8 @@ export const ResultScreen: React.FC<Props> = ({
 
   const handleCopyShare = async () => {
     sound.playSelect();
-    const shareText = `🌈 ฉันได้ผลลัพธ์ดีกรีตัวแม่ ${percentage}%: "${tier.title}"\n${tier.quote}\nมาลองวัดเปอร์เซ็นต์ความปังของคุณกัน!`;
+    const currentUrl = typeof window !== 'undefined' ? window.location.origin + window.location.pathname : '';
+    const shareText = `🌈 ฉันได้ผลลัพธ์ดีกรีตัวแม่ ${percentage}%: "${tier.title}"\n${tier.quote}\nมาลองวัดเปอร์เซ็นต์ความปังของคุณกัน! 👉 ${currentUrl}`;
     try {
       if (navigator.clipboard) {
         await navigator.clipboard.writeText(shareText);
@@ -167,25 +170,58 @@ export const ResultScreen: React.FC<Props> = ({
         </div>
 
         {/* Action Buttons */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-          <button
-            onClick={handleCopyShare}
-            className="flex-1 py-4 px-6 rounded-2xl bg-gradient-to-r from-pink-500 via-rose-500 to-purple-600 hover:opacity-95 text-white font-black text-sm sm:text-base flex items-center justify-center gap-2.5 shadow-xl shadow-pink-500/30 transition-all cursor-pointer active:scale-95 animate-rainbow"
-          >
-            {copied ? <Check className="w-5 h-5" /> : <Share2 className="w-5 h-5" />}
-            <span>{copied ? 'คัดลอกผลลัพธ์แล้ว! ส่งให้เพื่อนเลย 💖' : 'แชร์ผลลัพธ์ให้เพื่อนดู 🌈'}</span>
-          </button>
+        <div className="space-y-3">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+            {onOpenShare ? (
+              <button
+                onClick={() => {
+                  sound.playSelect();
+                  onOpenShare();
+                }}
+                className="flex-1 py-4 px-6 rounded-2xl bg-gradient-to-r from-pink-500 via-rose-500 to-purple-600 hover:opacity-95 text-white font-black text-sm sm:text-base flex items-center justify-center gap-2.5 shadow-xl shadow-pink-500/30 transition-all cursor-pointer active:scale-95 animate-rainbow"
+              >
+                <Share2 className="w-5 h-5" />
+                <span>แชร์ผลลัพธ์ & เซฟการ์ดรูปภาพ 🌈</span>
+              </button>
+            ) : (
+              <button
+                onClick={handleCopyShare}
+                className="flex-1 py-4 px-6 rounded-2xl bg-gradient-to-r from-pink-500 via-rose-500 to-purple-600 hover:opacity-95 text-white font-black text-sm sm:text-base flex items-center justify-center gap-2.5 shadow-xl shadow-pink-500/30 transition-all cursor-pointer active:scale-95 animate-rainbow"
+              >
+                {copied ? <Check className="w-5 h-5" /> : <Share2 className="w-5 h-5" />}
+                <span>{copied ? 'คัดลอกผลลัพธ์แล้ว! ส่งให้เพื่อนเลย 💖' : 'แชร์ผลลัพธ์ให้เพื่อนดู 🌈'}</span>
+              </button>
+            )}
 
-          <button
-            onClick={() => {
-              sound.playSelect();
-              onRestart();
-            }}
-            className="py-4 px-6 rounded-2xl bg-white/10 hover:bg-white/15 border border-pink-400/30 text-slate-100 hover:text-white font-bold text-sm sm:text-base flex items-center justify-center gap-2 transition-all cursor-pointer active:scale-95"
-          >
-            <RotateCcw className="w-4 h-4 text-pink-400" />
-            <span>เล่นใหม่อีกครั้ง</span>
-          </button>
+            <button
+              onClick={handleCopyShare}
+              className="py-4 px-5 rounded-2xl bg-white/10 hover:bg-white/15 border border-pink-400/30 text-slate-100 hover:text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all cursor-pointer active:scale-95 shrink-0"
+              title="คัดลอกข้อความสรุปผล"
+            >
+              {copied ? (
+                <>
+                  <Check className="w-4 h-4 text-emerald-400" />
+                  <span className="text-emerald-300">คัดลอกแล้ว!</span>
+                </>
+              ) : (
+                <>
+                  <Copy className="w-4 h-4 text-pink-400" />
+                  <span>คัดลอกข้อความ</span>
+                </>
+              )}
+            </button>
+
+            <button
+              onClick={() => {
+                sound.playSelect();
+                onRestart();
+              }}
+              className="py-4 px-6 rounded-2xl bg-white/10 hover:bg-white/15 border border-pink-400/30 text-slate-100 hover:text-white font-bold text-sm sm:text-base flex items-center justify-center gap-2 transition-all cursor-pointer active:scale-95 shrink-0"
+            >
+              <RotateCcw className="w-4 h-4 text-pink-400" />
+              <span>เล่นใหม่อีกครั้ง</span>
+            </button>
+          </div>
         </div>
 
         {/* Reassuring Friendly Disclaimer Reminder */}
@@ -198,3 +234,4 @@ export const ResultScreen: React.FC<Props> = ({
     </div>
   );
 };
+

@@ -1,13 +1,24 @@
 import React, { useState } from 'react';
-import { Sparkles, ArrowRight, HeartHandshake, Eye, Flame, ShieldAlert, Heart } from 'lucide-react';
+import {
+  Sparkles,
+  ArrowRight,
+  HeartHandshake,
+  Eye,
+  Flame,
+  ShieldAlert,
+  Share2,
+  QrCode,
+} from 'lucide-react';
 import { motion } from 'motion/react';
 import { sound } from '../utils/audio';
+import { PWAInstallButton } from './PWAInstallButton';
 
 interface Props {
   onStart: () => void;
+  onOpenShare?: () => void;
 }
 
-export const IntroScreen: React.FC<Props> = ({ onStart }) => {
+export const IntroScreen: React.FC<Props> = ({ onStart, onOpenShare }) => {
   const [heroFailed, setHeroFailed] = useState(false);
 
   const handleStart = () => {
@@ -118,8 +129,8 @@ export const IntroScreen: React.FC<Props> = ({ onStart }) => {
           </div>
         </div>
 
-        {/* CTA Action: Single Big Vibrant Pride Button (No criteria preview button!) */}
-        <div className="pt-2">
+        {/* Action Buttons: Start Quiz + Share & QR + Install */}
+        <div className="space-y-3 pt-2">
           <button
             onClick={handleStart}
             className="w-full py-4 sm:py-5 px-6 rounded-2xl bg-gradient-to-r from-pink-500 via-rose-500 via-amber-400 to-purple-600 hover:opacity-95 text-white font-black text-base sm:text-xl shadow-xl shadow-pink-500/30 flex items-center justify-center gap-3 transition-all transform active:scale-98 cursor-pointer animate-rainbow"
@@ -127,8 +138,26 @@ export const IntroScreen: React.FC<Props> = ({ onStart }) => {
             <span>เริ่มทำแบบทดสอบเลย (15 ข้อ) 🌈✨</span>
             <ArrowRight className="w-6 h-6" />
           </button>
+
+          <div className="flex flex-col sm:flex-row items-center gap-3 justify-center">
+            {onOpenShare && (
+              <button
+                onClick={() => {
+                  sound.playSelect();
+                  onOpenShare();
+                }}
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-white/10 hover:bg-white/15 border border-pink-400/30 text-pink-200 hover:text-white text-xs sm:text-sm font-bold transition cursor-pointer active:scale-95"
+              >
+                <Share2 className="w-4 h-4 text-pink-400" />
+                <span>แชร์ให้เพื่อน / เปิด QR Code</span>
+              </button>
+            )}
+
+            <PWAInstallButton variant="prominent" />
+          </div>
         </div>
       </motion.div>
     </div>
   );
 };
+

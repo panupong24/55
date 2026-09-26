@@ -6,6 +6,8 @@ import { Navbar } from './components/Navbar';
 import { IntroScreen } from './components/IntroScreen';
 import { QuestionScreen } from './components/QuestionScreen';
 import { ResultScreen } from './components/ResultScreen';
+import { ShareModal } from './components/ShareModal';
+import { OfflineIndicator } from './components/OfflineIndicator';
 
 type AppStep = 'INTRO' | 'QUIZ' | 'RESULT';
 
@@ -13,6 +15,7 @@ export default function App() {
   const [step, setStep] = useState<AppStep>('INTRO');
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<number, { optionId: string; score: number }>>({});
+  const [isShareOpen, setIsShareOpen] = useState(false);
 
   const currentQuestion = questions[currentQuestionIndex];
   const selectedAnswer = answers[currentQuestionIndex];
@@ -102,6 +105,9 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-pink-500 selection:text-white relative overflow-x-hidden">
+      {/* Offline Status Indicator */}
+      <OfflineIndicator />
+
       {/* Dynamic Ambient LGBTQ+ Colorful Pride Glows */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
         <div className="absolute -top-32 -left-32 w-96 h-96 bg-pink-500/15 rounded-full blur-[120px]" />
@@ -114,6 +120,7 @@ export default function App() {
       <Navbar
         onReset={handleRestart}
         isPlaying={step === 'QUIZ'}
+        onOpenShare={() => setIsShareOpen(true)}
       />
 
       {/* Main Content View */}
@@ -121,6 +128,7 @@ export default function App() {
         {step === 'INTRO' && (
           <IntroScreen
             onStart={handleStart}
+            onOpenShare={() => setIsShareOpen(true)}
           />
         )}
 
@@ -141,23 +149,41 @@ export default function App() {
             percentage={result.percentage}
             tier={result.tier}
             onRestart={handleRestart}
+            onOpenShare={() => setIsShareOpen(true)}
           />
         )}
       </main>
 
+      {/* Share / Publish Modal */}
+      <ShareModal
+        isOpen={isShareOpen}
+        onClose={() => setIsShareOpen(false)}
+        percentage={step === 'RESULT' ? result.percentage : undefined}
+        tier={step === 'RESULT' ? result.tier : undefined}
+      />
+
       {/* Festive Pride Footer */}
       <footer className="py-5 border-t border-pink-500/20 text-center text-xs text-slate-400 relative z-10 bg-slate-950/80 backdrop-blur-md">
-        <div className="max-w-4xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
-          <span className="font-medium flex items-center gap-1.5">
-            <span>🌈 Rainbow Vibe Quiz</span>
+        <div className="max-w-4xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <span className="font-semibold text-slate-200">🌈 Remix Rainbow Vibe Quiz</span>
             <span className="text-slate-600">·</span>
             <span className="text-pink-300">Pride Edition</span>
-          </span>
-          <span className="text-slate-500">
-            15 ข้อจัดเต็ม · สรุปผล % ทันที
-          </span>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setIsShareOpen(true)}
+              className="text-pink-300 hover:text-pink-200 underline font-medium cursor-pointer"
+            >
+              แชร์เว็บ & QR Code
+            </button>
+            <span className="text-slate-600">·</span>
+            <span className="text-slate-500">15 ข้อจัดเต็ม · สรุปผล % ทันที</span>
+          </div>
         </div>
       </footer>
     </div>
   );
 }
+
