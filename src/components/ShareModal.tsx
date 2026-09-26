@@ -90,8 +90,8 @@ export const ShareModal: React.FC<Props> = ({
 
   const shareTitle =
     percentage !== undefined && tier
-      ? `🌈 ฉันได้ผลลัพธ์ดีกรีตัวแม่ ${percentage}%: "${tier.title}" (${tier.badge}) | แบบทดสอบ Remix Rainbow Vibe Quiz`
-      : `🌈 Remix Rainbow Vibe Quiz — แบบทดสอบวัดดีกรีตัวแม่สายรุ้งสุดฮา 15 ข้อ`;
+      ? `🌈 ฉันได้ผลลัพธ์ดีกรีตัวแม่ ${percentage}%: "${tier.title}" (${tier.badge}) | แบบทดสอบ Rainbow Vibe Quiz`
+      : `🌈 Rainbow Vibe Quiz — แบบทดสอบวัดดีกรีตัวแม่สายรุ้งสุดฮา 15 ข้อ`;
 
   const shareDescription =
     tier?.quote || 'มาลองวัดเปอร์เซ็นต์ความตัวแม่สายรุ้งของคุณกัน!';
@@ -194,7 +194,7 @@ export const ShareModal: React.FC<Props> = ({
       ctx.textAlign = 'center';
       ctx.fillStyle = '#f472b6';
       ctx.font = 'bold 34px "Prompt", sans-serif';
-      ctx.fillText('🌈 REMIX RAINBOW VIBE QUIZ 🏳️‍🌈', 540, 160);
+      ctx.fillText('🌈 RAINBOW VIBE QUIZ 🏳️‍🌈', 540, 160);
 
       ctx.fillStyle = '#94a3b8';
       ctx.font = '24px "Prompt", sans-serif';

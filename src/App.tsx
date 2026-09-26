@@ -288,7 +288,7 @@ export default function App() {
       <footer className="py-5 border-t border-pink-500/20 text-center text-xs text-slate-400 relative z-10 bg-slate-950/80 backdrop-blur-md">
         <div className="max-w-4xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <span className="font-semibold text-slate-200">🌈 Remix Rainbow Vibe Quiz</span>
+            <span className="font-semibold text-slate-200">🌈 Rainbow Vibe Quiz</span>
             <span className="text-slate-600">·</span>
             <span className="text-pink-300">Pride Edition</span>
           </div>
