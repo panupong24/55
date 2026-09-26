@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import confetti from 'canvas-confetti';
 import { motion } from 'motion/react';
-import { RotateCcw, Share2, Sparkles, Check, Trophy, Quote, QrCode, Copy } from 'lucide-react';
+import { RotateCcw, Share2, Sparkles, Check, Trophy, Quote, QrCode, Copy, Download } from 'lucide-react';
 import { QuizResultTier } from '../types';
 import { sound } from '../utils/audio';
 
@@ -9,7 +9,11 @@ interface Props {
   percentage: number;
   tier: QuizResultTier;
   onRestart: () => void;
-  onOpenShare?: () => void;
+  onOpenShare?: (data?: {
+    percentage: number;
+    tier: QuizResultTier;
+    initialTab?: 'social' | 'qr' | 'card';
+  }) => void;
 }
 
 export const ResultScreen: React.FC<Props> = ({
@@ -173,16 +177,30 @@ export const ResultScreen: React.FC<Props> = ({
         <div className="space-y-3">
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
             {onOpenShare ? (
-              <button
-                onClick={() => {
-                  sound.playSelect();
-                  onOpenShare();
-                }}
-                className="flex-1 py-4 px-6 rounded-2xl bg-gradient-to-r from-pink-500 via-rose-500 to-purple-600 hover:opacity-95 text-white font-black text-sm sm:text-base flex items-center justify-center gap-2.5 shadow-xl shadow-pink-500/30 transition-all cursor-pointer active:scale-95 animate-rainbow"
-              >
-                <Share2 className="w-5 h-5" />
-                <span>แชร์ผลลัพธ์ & เซฟการ์ดรูปภาพ 🌈</span>
-              </button>
+              <>
+                <button
+                  onClick={() => {
+                    sound.playSelect();
+                    onOpenShare({ percentage, tier, initialTab: 'card' });
+                  }}
+                  className="flex-1 py-4 px-6 rounded-2xl bg-gradient-to-r from-pink-500 via-rose-500 to-purple-600 hover:opacity-95 text-white font-black text-sm sm:text-base flex items-center justify-center gap-2.5 shadow-xl shadow-pink-500/30 transition-all cursor-pointer active:scale-95 animate-rainbow"
+                >
+                  <Download className="w-5 h-5 text-yellow-300" />
+                  <span>บันทึกการ์ดรูปภาพ (Story Card) 🌈</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    sound.playSelect();
+                    onOpenShare({ percentage, tier, initialTab: 'social' });
+                  }}
+                  className="py-4 px-5 rounded-2xl bg-white/10 hover:bg-white/15 border border-pink-400/30 text-slate-100 hover:text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all cursor-pointer active:scale-95 shrink-0"
+                  title="แชร์ไปยังโซเชียล & QR Code"
+                >
+                  <Share2 className="w-4 h-4 text-pink-400" />
+                  <span>แชร์โซเชียล</span>
+                </button>
+              </>
             ) : (
               <button
                 onClick={handleCopyShare}

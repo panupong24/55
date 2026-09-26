@@ -37,11 +37,56 @@ export default function App() {
 
   const [isShareOpen, setIsShareOpen] = useState(false);
   const [isResetModalOpen, setIsResetModalOpen] = useState(false);
+  const [shareConfig, setShareConfig] = useState<{
+    percentage?: number;
+    tier?: any;
+    initialTab?: 'social' | 'qr' | 'card';
+  }>({});
 
   const currentQuestion = questions[currentQuestionIndex];
   const selectedAnswer = answers[currentQuestionIndex];
   const answeredCount = Object.keys(answers).length;
   const hasSavedProgress = answeredCount > 0;
+
+  // Calculate percentage and tier strictly internally (Hidden from players)
+  const scoreList = Object.values(answers).map((a) => a.score);
+  const result = calculateQuizResult(scoreList);
+
+  // Handler to open ShareModal with real, latest result props guaranteed
+  const handleOpenShare = useCallback(
+    (config?: {
+      percentage?: number;
+      tier?: any;
+      initialTab?: 'social' | 'qr' | 'card';
+    }) => {
+      // Guaranteed to use latest player result props
+      const currentScoreList = Object.values(answers).map((a) => a.score);
+      const computedResult =
+        currentScoreList.length > 0 ? calculateQuizResult(currentScoreList) : result;
+
+      const activePercentage =
+        config?.percentage !== undefined
+          ? config.percentage
+          : step === 'RESULT' || currentScoreList.length > 0
+            ? computedResult.percentage
+            : undefined;
+
+      const activeTier =
+        config?.tier !== undefined
+          ? config.tier
+          : step === 'RESULT' || currentScoreList.length > 0
+            ? computedResult.tier
+            : undefined;
+
+      setShareConfig({
+        percentage: activePercentage,
+        tier: activeTier,
+        initialTab: config?.initialTab || 'social',
+      });
+      setIsShareOpen(true);
+    },
+    [answers, result, step],
+  );
 
   // Start fresh from question 1
   const handleStart = () => {
@@ -157,10 +202,6 @@ export default function App() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [step, currentQuestion, selectedAnswer, handleSelectOption, handleNext, handlePrev, isResetModalOpen, isShareOpen]);
 
-  // Calculate percentage and tier strictly internally (Hidden from players)
-  const scoreList = Object.values(answers).map((a) => a.score);
-  const result = calculateQuizResult(scoreList);
-
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-pink-500 selection:text-white relative overflow-x-hidden">
       {/* Offline Status Indicator */}
@@ -178,7 +219,7 @@ export default function App() {
       <Navbar
         onReset={handleRequestReset}
         isPlaying={step === 'QUIZ' || step === 'RESULT'}
-        onOpenShare={() => setIsShareOpen(true)}
+        onOpenShare={() => handleOpenShare({ initialTab: 'social' })}
       />
 
       {/* Main Content View */}
@@ -186,7 +227,7 @@ export default function App() {
         {step === 'INTRO' && (
           <IntroScreen
             onStart={handleStart}
-            onOpenShare={() => setIsShareOpen(true)}
+            onOpenShare={() => handleOpenShare({ initialTab: 'social' })}
             hasSavedProgress={hasSavedProgress}
             savedQuestionNumber={currentQuestionIndex + 1}
             onResume={handleResume}
@@ -212,7 +253,15 @@ export default function App() {
             percentage={result.percentage}
             tier={result.tier}
             onRestart={handleConfirmReset}
-            onOpenShare={() => setIsShareOpen(true)}
+            onOpenShare={(data) =>
+              handleOpenShare(
+                data || {
+                  percentage: result.percentage,
+                  tier: result.tier,
+                  initialTab: 'card',
+                },
+              )
+            }
           />
         )}
       </main>
@@ -221,8 +270,9 @@ export default function App() {
       <ShareModal
         isOpen={isShareOpen}
         onClose={() => setIsShareOpen(false)}
-        percentage={step === 'RESULT' ? result.percentage : undefined}
-        tier={step === 'RESULT' ? result.tier : undefined}
+        percentage={shareConfig.percentage}
+        tier={shareConfig.tier}
+        initialTab={shareConfig.initialTab}
       />
 
       {/* Reset Confirmation Modal */}
@@ -245,7 +295,7 @@ export default function App() {
 
           <div className="flex items-center gap-3">
             <button
-              onClick={() => setIsShareOpen(true)}
+              onClick={() => handleOpenShare({ initialTab: 'social' })}
               className="text-pink-300 hover:text-pink-200 underline font-medium cursor-pointer"
             >
               แชร์เว็บ & QR Code
