@@ -1,0 +1,8 @@
+{
+  "name": "Remix Rainbow Vibe Quiz",
+  "description": "แบบทดสอบวัดดีกรีตัวแม่สายรุ้งสุดฮา 15 ข้อ พร้อมภาพประกอบสุดจึ้งและสรุปผลเปอร์เซ็นต์ความปัง",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

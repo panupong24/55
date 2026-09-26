@@ -1,0 +1,70 @@
+@import "tailwindcss";
+
+@layer utilities {
+  .rainbow-text {
+    background: linear-gradient(
+      90deg,
+      #ff2a6d 0%,
+      #ff6200 20%,
+      #ffb800 40%,
+      #00e676 60%,
+      #00b0ff 80%,
+      #9d00ff 100%
+    );
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .rainbow-bg {
+    background: linear-gradient(
+      90deg,
+      #ff2a6d,
+      #ff6200,
+      #ffb800,
+      #00e676,
+      #00b0ff,
+      #9d00ff
+    );
+  }
+
+  .rainbow-border-glow {
+    position: relative;
+  }
+
+  .rainbow-border-glow::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border-radius: inherit;
+    background: linear-gradient(
+      135deg,
+      #ff2a6d,
+      #ff9100,
+      #ffea00,
+      #00e676,
+      #00e5ff,
+      #d500f9
+    );
+    z-index: -1;
+    opacity: 0.8;
+    filter: blur(1px);
+    transition: opacity 0.3s ease;
+  }
+}
+
+@keyframes rainbowShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.animate-rainbow {
+  background-size: 300% 300%;
+  animation: rainbowShift 6s ease infinite;
+}
