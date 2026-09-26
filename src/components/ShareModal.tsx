@@ -37,7 +37,7 @@ export const ShareModal: React.FC<Props> = ({
     if (typeof window !== 'undefined') {
       return window.location.origin + window.location.pathname;
     }
-    return 'https://ais-pre-gqspgufn2o2j5qzqrjuef7-671713074594.asia-southeast1.run.app';
+    return 'https://panupong24.github.io/55/';
   };
 
   const currentUrl = getShareUrl();
