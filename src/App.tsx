@@ -8,65 +8,123 @@ import { QuestionScreen } from './components/QuestionScreen';
 import { ResultScreen } from './components/ResultScreen';
 import { ShareModal } from './components/ShareModal';
 import { OfflineIndicator } from './components/OfflineIndicator';
+import { ResetConfirmModal } from './components/ResetConfirmModal';
+import { quizStorage, QuizProgress } from './utils/quizStorage';
 
 type AppStep = 'INTRO' | 'QUIZ' | 'RESULT';
 
 export default function App() {
-  const [step, setStep] = useState<AppStep>('INTRO');
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [answers, setAnswers] = useState<Record<number, { optionId: string; score: number }>>({});
+  // Synchronously load saved state from localStorage so page reload immediately restores where player left off
+  const [initialProgress] = useState<QuizProgress | null>(() => quizStorage.loadProgress());
+
+  const [step, setStep] = useState<AppStep>(() => {
+    if (initialProgress?.step === 'QUIZ' || initialProgress?.step === 'RESULT') {
+      return initialProgress.step;
+    }
+    return 'INTRO';
+  });
+
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number>(() => {
+    if (initialProgress && typeof initialProgress.currentQuestionIndex === 'number') {
+      return Math.min(Math.max(0, initialProgress.currentQuestionIndex), questions.length - 1);
+    }
+    return 0;
+  });
+
+  const [answers, setAnswers] = useState<Record<number, { optionId: string; score: number }>>(() => {
+    return initialProgress?.answers || {};
+  });
+
   const [isShareOpen, setIsShareOpen] = useState(false);
+  const [isResetModalOpen, setIsResetModalOpen] = useState(false);
 
   const currentQuestion = questions[currentQuestionIndex];
   const selectedAnswer = answers[currentQuestionIndex];
+  const answeredCount = Object.keys(answers).length;
+  const hasSavedProgress = answeredCount > 0;
 
+  // Start fresh from question 1
   const handleStart = () => {
-    setAnswers({});
+    const emptyAnswers: Record<number, { optionId: string; score: number }> = {};
+    setAnswers(emptyAnswers);
     setCurrentQuestionIndex(0);
     setStep('QUIZ');
+    quizStorage.saveProgress('QUIZ', 0, emptyAnswers);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  // Resume directly from current question
+  const handleResume = () => {
+    setStep('QUIZ');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Select an option: Persist answers and current state immediately
   const handleSelectOption = useCallback(
     (option: Option) => {
-      setAnswers((prev) => ({
-        ...prev,
-        [currentQuestionIndex]: {
-          optionId: option.id,
-          score: option.score,
-        },
-      }));
+      setAnswers((prev) => {
+        const nextAnswers = {
+          ...prev,
+          [currentQuestionIndex]: {
+            optionId: option.id,
+            score: option.score,
+          },
+        };
+        quizStorage.saveProgress('QUIZ', currentQuestionIndex, nextAnswers);
+        return nextAnswers;
+      });
     },
     [currentQuestionIndex],
   );
 
+  // Navigate to Next question or Finish Quiz
   const handleNext = useCallback(() => {
     if (!answers[currentQuestionIndex]) return;
 
     if (currentQuestionIndex < questions.length - 1) {
-      setCurrentQuestionIndex((prev) => prev + 1);
+      const nextIndex = currentQuestionIndex + 1;
+      setCurrentQuestionIndex(nextIndex);
+      quizStorage.saveProgress('QUIZ', nextIndex, answers);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
       setStep('RESULT');
+      quizStorage.saveProgress('RESULT', currentQuestionIndex, answers);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   }, [answers, currentQuestionIndex]);
 
+  // Navigate to Previous question
   const handlePrev = useCallback(() => {
     if (currentQuestionIndex > 0) {
-      setCurrentQuestionIndex((prev) => prev - 1);
+      const prevIndex = currentQuestionIndex - 1;
+      setCurrentQuestionIndex(prevIndex);
+      quizStorage.saveProgress('QUIZ', prevIndex, answers);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
-  }, [currentQuestionIndex]);
+  }, [currentQuestionIndex, answers]);
 
-  const handleRestart = () => {
+  // Trigger reset dialog (or direct reset if on result screen or no answers yet)
+  const handleRequestReset = () => {
+    if (step === 'QUIZ' && answeredCount > 0) {
+      setIsResetModalOpen(true);
+    } else {
+      handleConfirmReset();
+    }
+  };
+
+  // Explicit confirmation: Clears progress ONLY when user explicitly confirms
+  const handleConfirmReset = () => {
+    quizStorage.clearProgress();
     setAnswers({});
     setCurrentQuestionIndex(0);
     setStep('INTRO');
+    setIsResetModalOpen(false);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Keyboard navigation for power users (a, b, c, d or 1, 2, 3, 4, Enter)
+  // Keyboard navigation for power users (a, b, c, d or 1, 2, 3, 4, Enter, ArrowLeft)
   useEffect(() => {
-    if (step !== 'QUIZ') return;
+    if (step !== 'QUIZ' || isResetModalOpen || isShareOpen) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
       const key = e.key.toLowerCase();
@@ -97,7 +155,7 @@ export default function App() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [step, currentQuestion, selectedAnswer, handleSelectOption, handleNext, handlePrev]);
+  }, [step, currentQuestion, selectedAnswer, handleSelectOption, handleNext, handlePrev, isResetModalOpen, isShareOpen]);
 
   // Calculate percentage and tier strictly internally (Hidden from players)
   const scoreList = Object.values(answers).map((a) => a.score);
@@ -118,8 +176,8 @@ export default function App() {
 
       {/* Top Bar Header */}
       <Navbar
-        onReset={handleRestart}
-        isPlaying={step === 'QUIZ'}
+        onReset={handleRequestReset}
+        isPlaying={step === 'QUIZ' || step === 'RESULT'}
         onOpenShare={() => setIsShareOpen(true)}
       />
 
@@ -129,6 +187,10 @@ export default function App() {
           <IntroScreen
             onStart={handleStart}
             onOpenShare={() => setIsShareOpen(true)}
+            hasSavedProgress={hasSavedProgress}
+            savedQuestionNumber={currentQuestionIndex + 1}
+            onResume={handleResume}
+            onReset={handleConfirmReset}
           />
         )}
 
@@ -141,6 +203,7 @@ export default function App() {
             onSelectOption={handleSelectOption}
             onNext={handleNext}
             onPrev={handlePrev}
+            onReset={handleRequestReset}
           />
         )}
 
@@ -148,7 +211,7 @@ export default function App() {
           <ResultScreen
             percentage={result.percentage}
             tier={result.tier}
-            onRestart={handleRestart}
+            onRestart={handleConfirmReset}
             onOpenShare={() => setIsShareOpen(true)}
           />
         )}
@@ -160,6 +223,15 @@ export default function App() {
         onClose={() => setIsShareOpen(false)}
         percentage={step === 'RESULT' ? result.percentage : undefined}
         tier={step === 'RESULT' ? result.tier : undefined}
+      />
+
+      {/* Reset Confirmation Modal */}
+      <ResetConfirmModal
+        isOpen={isResetModalOpen}
+        onClose={() => setIsResetModalOpen(false)}
+        onConfirm={handleConfirmReset}
+        answeredCount={answeredCount}
+        totalQuestions={questions.length}
       />
 
       {/* Festive Pride Footer */}
@@ -186,4 +258,3 @@ export default function App() {
     </div>
   );
 }
-

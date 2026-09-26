@@ -8,6 +8,8 @@ import {
   ShieldAlert,
   Share2,
   QrCode,
+  Play,
+  RotateCcw,
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { sound } from '../utils/audio';
@@ -17,14 +19,30 @@ import heroImage from '../assets/images/hero_rainbow_quiz_1790434208133.jpg';
 interface Props {
   onStart: () => void;
   onOpenShare?: () => void;
+  hasSavedProgress?: boolean;
+  savedQuestionNumber?: number;
+  onResume?: () => void;
+  onReset?: () => void;
 }
 
-export const IntroScreen: React.FC<Props> = ({ onStart, onOpenShare }) => {
+export const IntroScreen: React.FC<Props> = ({
+  onStart,
+  onOpenShare,
+  hasSavedProgress,
+  savedQuestionNumber = 1,
+  onResume,
+  onReset,
+}) => {
   const [heroFailed, setHeroFailed] = useState(false);
 
   const handleStart = () => {
     sound.playSelect();
     onStart();
+  };
+
+  const handleResume = () => {
+    sound.playSelect();
+    if (onResume) onResume();
   };
 
   return (
@@ -132,11 +150,51 @@ export const IntroScreen: React.FC<Props> = ({ onStart, onOpenShare }) => {
 
         {/* Action Buttons: Start Quiz + Share & QR + Install */}
         <div className="space-y-3 pt-2">
+          {hasSavedProgress && onResume && (
+            <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-purple-900/40 via-pink-900/35 to-indigo-900/40 border-2 border-pink-400/50 shadow-xl flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-pink-500/20 border border-pink-400/40 flex items-center justify-center shrink-0 text-xl">
+                  💾
+                </div>
+                <div>
+                  <p className="font-black text-white text-sm sm:text-base">
+                    พบแบบทดสอบที่ทำค้างไว้!
+                  </p>
+                  <p className="text-xs text-pink-200">
+                    ตอบค้างอยู่ที่ข้อที่ <span className="font-bold text-yellow-300">{savedQuestionNumber}</span> จาก 15 ข้อ
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <button
+                  onClick={handleResume}
+                  className="flex-1 sm:flex-initial px-5 py-2.5 rounded-xl bg-gradient-to-r from-pink-500 to-purple-600 hover:opacity-95 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-md cursor-pointer active:scale-95 animate-rainbow"
+                >
+                  <Play className="w-4 h-4 fill-white" />
+                  <span>ทำต่อจากเดิม</span>
+                </button>
+                {onReset && (
+                  <button
+                    onClick={() => {
+                      sound.playSelect();
+                      onReset();
+                    }}
+                    className="px-3.5 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-slate-300 hover:text-white text-xs font-semibold flex items-center justify-center gap-1.5 border border-white/10 cursor-pointer active:scale-95"
+                    title="ล้างข้อมูลและเริ่มใหม่"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                    <span>เริ่มใหม่</span>
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+
           <button
             onClick={handleStart}
             className="w-full py-4 sm:py-5 px-6 rounded-2xl bg-gradient-to-r from-pink-500 via-rose-500 via-amber-400 to-purple-600 hover:opacity-95 text-white font-black text-base sm:text-xl shadow-xl shadow-pink-500/30 flex items-center justify-center gap-3 transition-all transform active:scale-98 cursor-pointer animate-rainbow"
           >
-            <span>เริ่มทำแบบทดสอบเลย (15 ข้อ) 🌈✨</span>
+            <span>{hasSavedProgress ? 'เริ่มทำใหม่ตั้งแต่ข้อ 1 (15 ข้อ) 🌈✨' : 'เริ่มทำแบบทดสอบเลย (15 ข้อ) 🌈✨'}</span>
             <ArrowRight className="w-6 h-6" />
           </button>
 

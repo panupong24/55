@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ArrowLeft, ArrowRight, CheckCircle2, Sparkles } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CheckCircle2, Sparkles, RotateCcw, Save } from 'lucide-react';
 import { Question, Option } from '../types';
 import { QuestionIllustration } from './QuestionIllustration';
 import { sound } from '../utils/audio';
@@ -13,6 +13,7 @@ interface Props {
   onSelectOption: (option: Option) => void;
   onNext: () => void;
   onPrev: () => void;
+  onReset?: () => void;
 }
 
 export const QuestionScreen: React.FC<Props> = ({
@@ -23,6 +24,7 @@ export const QuestionScreen: React.FC<Props> = ({
   onSelectOption,
   onNext,
   onPrev,
+  onReset,
 }) => {
   const isFirst = currentIndex === 0;
   const isLast = currentIndex === totalQuestions - 1;
@@ -158,32 +160,55 @@ export const QuestionScreen: React.FC<Props> = ({
           </div>
 
           {/* Bottom Navigation */}
-          <div className="flex items-center justify-between pt-4 sm:pt-6 border-t border-pink-500/20">
-            <button
-              onClick={handlePrevClick}
-              disabled={isFirst}
-              className={`px-4 py-2.5 rounded-xl border text-xs sm:text-sm font-bold flex items-center gap-2 transition-all ${
-                isFirst
-                  ? 'opacity-30 border-white/5 text-slate-600 cursor-not-allowed'
-                  : 'bg-white/10 hover:bg-white/15 border-white/20 text-slate-200 hover:text-white cursor-pointer active:scale-95'
-              }`}
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span>ย้อนกลับ</span>
-            </button>
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 sm:pt-6 border-t border-pink-500/20">
+            <div className="flex items-center justify-between w-full sm:w-auto gap-2">
+              <button
+                onClick={handlePrevClick}
+                disabled={isFirst}
+                className={`px-4 py-2.5 rounded-xl border text-xs sm:text-sm font-bold flex items-center gap-2 transition-all ${
+                  isFirst
+                    ? 'opacity-30 border-white/5 text-slate-600 cursor-not-allowed'
+                    : 'bg-white/10 hover:bg-white/15 border-white/20 text-slate-200 hover:text-white cursor-pointer active:scale-95'
+                }`}
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span>ย้อนกลับ</span>
+              </button>
 
-            <button
-              onClick={handleNextClick}
-              disabled={!selectedOptionId}
-              className={`px-6 py-3 rounded-2xl font-black text-xs sm:text-base flex items-center gap-2.5 transition-all shadow-lg ${
-                selectedOptionId
-                  ? 'bg-gradient-to-r from-pink-500 via-rose-500 to-purple-600 hover:opacity-95 text-white cursor-pointer shadow-pink-500/30 active:scale-95 animate-rainbow'
-                  : 'bg-white/5 text-slate-500 border border-white/5 cursor-not-allowed'
-              }`}
-            >
-              <span>{isLast ? 'ดูผลสรุป % ความตัวแม่ 🌈' : 'ข้อถัดไป'}</span>
-              <ArrowRight className="w-4 h-4" />
-            </button>
+              {onReset && (
+                <button
+                  onClick={() => {
+                    sound.playSelect();
+                    onReset();
+                  }}
+                  className="px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-slate-400 hover:text-slate-200 border border-white/10 text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer active:scale-95"
+                  title="เริ่มทำใหม่ตั้งแต่ต้น"
+                >
+                  <RotateCcw className="w-3.5 h-3.5 text-pink-400" />
+                  <span>เริ่มใหม่</span>
+                </button>
+              )}
+            </div>
+
+            <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+              <span className="hidden md:inline-flex items-center gap-1 text-[11px] text-slate-400">
+                <Save className="w-3 h-3 text-emerald-400" />
+                <span>บันทึกความคืบหน้าอัตโนมัติ</span>
+              </span>
+
+              <button
+                onClick={handleNextClick}
+                disabled={!selectedOptionId}
+                className={`w-full sm:w-auto px-6 py-3 rounded-2xl font-black text-xs sm:text-base flex items-center justify-center gap-2.5 transition-all shadow-lg ${
+                  selectedOptionId
+                    ? 'bg-gradient-to-r from-pink-500 via-rose-500 to-purple-600 hover:opacity-95 text-white cursor-pointer shadow-pink-500/30 active:scale-95 animate-rainbow'
+                    : 'bg-white/5 text-slate-500 border border-white/5 cursor-not-allowed'
+                }`}
+              >
+                <span>{isLast ? 'ดูผลสรุป % ความตัวแม่ 🌈' : 'ข้อถัดไป'}</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         </motion.div>
       </AnimatePresence>
