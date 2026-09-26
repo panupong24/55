@@ -37,7 +37,7 @@ export const ShareModal: React.FC<Props> = ({
     if (typeof window !== 'undefined') {
       return window.location.origin + window.location.pathname;
     }
-    return 'https://panupong24.github.io/55/';
+    return 'https://www.gaykub.online/';
   };
 
   const currentUrl = getShareUrl();

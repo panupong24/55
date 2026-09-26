@@ -6,7 +6,7 @@ import { defineConfig } from 'vite';
 
 export default defineConfig(() => {
   return {
-    base: '/55/',
+    base: '/',
     plugins: [
       react(),
       tailwindcss(),
@@ -21,7 +21,7 @@ export default defineConfig(() => {
           'pwa-maskable-512x512.png',
         ],
         manifest: {
-          id: '/55/',
+          id: '/',
           name: 'Rainbow Vibe Quiz',
           short_name: 'RainbowQuiz',
           description:
@@ -29,8 +29,8 @@ export default defineConfig(() => {
           theme_color: '#020617',
           background_color: '#020617',
           display: 'standalone',
-          start_url: '/55/',
-          scope: '/55/',
+          start_url: '/',
+          scope: '/',
           icons: [
             {
               src: 'pwa-192x192.png',
