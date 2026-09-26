@@ -24,7 +24,7 @@ export default defineConfig(() => {
 
 ### 2. GitHub Actions Workflow (`.github/workflows/deploy.yml`)
 เมื่อมีการ `git push` ไปยัง branch `main` หรือ `master` ใน repository `panupong24/55`:
-- ติดตั้ง Dependencies อัตโนมัติ (`npm ci || npm install`)
+- ติดตั้ง Dependencies อัตโนมัติ (`npm install`)
 - สั่ง Build โฟลเดอร์ `dist` (`npm run build`)
 - อัปโหลดและ Deploy โฟลเดอร์ `dist` ขึ้น **GitHub Pages** โดยตรงผ่าน Action ทางการของ GitHub
 
