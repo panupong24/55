@@ -1,5 +1,20 @@
 import { Question } from '../types';
 
+import imgTiktokDance from '../assets/images/quiz_tiktok_dance_1790436314817.jpg';
+import imgCatCafe from '../assets/images/quiz_cat_cafe_1790436328359.jpg';
+import imgBlBackhug from '../assets/images/quiz_bl_backhug_1790436339591.jpg';
+import imgBangkokPride from '../assets/images/quiz_bangkok_pride_1790436349886.jpg';
+import imgIgFlatlay from '../assets/images/quiz_ig_flatlay_1790436360268.jpg';
+import imgDistractedBoyfriend from '../assets/images/quiz_distracted_boyfriend.jpg';
+import imgBlHearthands from '../assets/images/quiz_bl_hearthands_1790436371061.jpg';
+import imgThaiIcon from '../assets/images/quiz_thai_icon_1790436382078.jpg';
+import imgPageantQueen from '../assets/images/quiz_pageant_queen_1790434242170.jpg';
+import imgBtsGroup from '../assets/images/quiz_bts_group_1790436394487.jpg';
+import imgPrideMeme from '../assets/images/quiz_pride_meme_1790436405083.jpg';
+import imgTarotFortune from '../assets/images/quiz_tarot_fortune_1790434253591.jpg';
+import imgKpopWonyoung from '../assets/images/quiz_kpop_wonyoung_1790436416525.jpg';
+import imgWellImGay from '../assets/images/quiz_well_im_gay.gif';
+
 export const questions: Question[] = [
   {
     id: 1,
@@ -7,7 +22,7 @@ export const questions: Question[] = [
     category: 'โซเชียลมีเดีย & ไวรัลแดนซ์',
     hint: 'เลือกการตอบสนองที่ตรงกับนิสัยการไถฟีดของคุณมากที่สุด',
     illustrationType: 'tiktok',
-    image: '/src/assets/images/quiz_tiktok_dance_1790436314817.jpg',
+    image: imgTiktokDance,
     options: [
       { id: 'a', text: 'เลื่อนผ่านอย่างไว ไม่ได้หยุดดู', score: 0 },
       { id: 'b', text: 'ดูจบคลิปเดียว เพลินๆ ดี', score: 1 },
@@ -21,7 +36,7 @@ export const questions: Question[] = [
     category: 'ดนตรี & จังหวะในหัวใจ',
     hint: 'เมื่อบีทเพลงเริ่มกระแทก โสตประสาทสั่งการอย่างไร',
     illustrationType: 'music',
-    image: '/src/assets/images/quiz_cat_cafe_1790436328359.jpg',
+    image: imgCatCafe,
     options: [
       { id: 'a', text: 'ไม่สนใจ นั่งจิบกาแฟปกติ', score: 0 },
       { id: 'b', text: 'โยกหัวตามจังหวะเบาๆ พอกรุบกริบ', score: 1 },
@@ -35,7 +50,7 @@ export const questions: Question[] = [
     category: 'จักรวาลซีรีส์ & คู่จิ้น',
     hint: 'มุมมองของคุณต่อซีรีส์วายไทยที่กำลังครองโลก',
     illustrationType: 'bl_series',
-    image: '/src/assets/images/quiz_bl_backhug_1790436339591.jpg',
+    image: imgBlBackhug,
     options: [
       { id: 'a', text: 'ไม่เคยดู งงว่าคืออะไร', score: 0 },
       { id: 'b', text: 'เคยผ่านตาในฟีด รู้จักผิวเผิน', score: 1 },
@@ -49,7 +64,7 @@ export const questions: Question[] = [
     category: 'เทศกาล & พลังแห่งสีรุ้ง',
     hint: 'เมื่อปฏิทินก้าวเข้าสู่เดือนมิถุนายนอันเจิดจ้า',
     illustrationType: 'pride',
-    image: '/src/assets/images/quiz_bangkok_pride_1790436349886.jpg',
+    image: imgBangkokPride,
     options: [
       { id: 'a', text: 'ขอผ่าน ไม่ใช่แนว คนเยอะเกินไป', score: 0 },
       { id: 'b', text: 'ไปเที่ยวเล่นก็ได้ เดินดูบรรยากาศชิลๆ', score: 1 },
@@ -63,7 +78,7 @@ export const questions: Question[] = [
     category: 'สไตล์ & การจัดองค์ประกอบ',
     hint: 'เบื้องหลังการอัปลงสตอรี่ที่คนอื่นเห็นเพียง 24 ชั่วโมง',
     illustrationType: 'ig_story',
-    image: '/src/assets/images/quiz_ig_flatlay_1790436360268.jpg',
+    image: imgIgFlatlay,
     options: [
       { id: 'a', text: 'ถ่ายมุมไหนก็ได้ ส่งเลย ไม่คิดเยอะ', score: 0 },
       { id: 'b', text: 'เลือกฟิลเตอร์นิดหน่อย ปรับแสงเบาๆ', score: 1 },
@@ -77,7 +92,7 @@ export const questions: Question[] = [
     category: 'เรดาร์ & สายตาการชื่นชม',
     hint: 'ปฏิกิริยาอัตโนมัติในเสี้ยววินาทีที่คนหน้าตาดีเดินสวน',
     illustrationType: 'radar_gaze',
-    image: '/src/assets/images/quiz_distracted_boyfriend.jpg',
+    image: imgDistractedBoyfriend,
     options: [
       { id: 'a', text: 'ไม่เคยคิดเลย เดินผ่านไปเฉยๆ', score: 0 },
       { id: 'b', text: 'นานๆ ที เมื่อคนนั้นโดดเด่นสะดุดตาจริงๆ', score: 1 },
@@ -91,7 +106,7 @@ export const questions: Question[] = [
     category: 'อารมณ์ร่วม & โลกแฟนฟิค',
     hint: 'เมื่อปมความรักในจอยังค้างคา หัวใจคนดูจะอยู่ได้อย่างไร',
     illustrationType: 'fanfic',
-    image: '/src/assets/images/quiz_bl_hearthands_1790436371061.jpg',
+    image: imgBlHearthands,
     options: [
       { id: 'a', text: 'เฉยๆ ดูเพื่อความบันเทิง ไม่ได้ผูกพัน', score: 0 },
       { id: 'b', text: 'ลุ้นเหมือนดูซีรีส์ทั่วไป รอดูตอนหน้า', score: 1 },
@@ -105,7 +120,7 @@ export const questions: Question[] = [
     category: 'คลังความรู้ & วงการป๊อปคัลเจอร์',
     hint: 'ระดับความคุ้นเคยกับดาวเด่นผู้ขับเคลื่อนวงการ',
     illustrationType: 'icons',
-    image: '/src/assets/images/quiz_thai_icon_1790436382078.jpg',
+    image: imgThaiIcon,
     options: [
       { id: 'a', text: 'ไม่รู้จักเลย แทบไม่ได้ติดตาม', score: 0 },
       { id: 'b', text: 'พอรู้จักผ่านข่าว คุ้นหน้าบางคน', score: 1 },
@@ -132,7 +147,7 @@ export const questions: Question[] = [
     category: 'เวทีมงกุฎ & โลกความงาม',
     hint: 'เทศกาลลุ้นมงระดับประเทศและระดับโลก',
     illustrationType: 'pageant',
-    image: '/src/assets/images/quiz_pageant_queen_1790434242170.jpg',
+    image: imgPageantQueen,
     options: [
       { id: 'a', text: 'ไม่เคยดู ไม่สนใจเลย', score: 0 },
       { id: 'b', text: 'ดูรอบตัดสินรอบเดียวพอ ลุ้นว่าใครชนะ', score: 1 },
@@ -146,7 +161,7 @@ export const questions: Question[] = [
     category: 'เพลย์ลิสต์ & ศิลปินคนโปรด',
     hint: 'สถิติเพลงในหูฟังที่เปิดวนอยู่ตลอดวัน',
     illustrationType: 'kpop',
-    image: '/src/assets/images/quiz_bts_group_1790436394487.jpg',
+    image: imgBtsGroup,
     options: [
       { id: 'a', text: 'ไม่มีเลย ฟังแนวอื่นล้วนๆ', score: 0 },
       { id: 'b', text: 'มีบ้างนิดหน่อย เพลงฮิตติดหูทั่วไป', score: 1 },
@@ -160,7 +175,7 @@ export const questions: Question[] = [
     category: 'มีม & วัฒนธรรมภาษาตัวแม่',
     hint: 'ความลื่นไหลในการใช้ศัพท์แสลงสุดไวรัล',
     illustrationType: 'slang_meme',
-    image: '/src/assets/images/quiz_pride_meme_1790436405083.jpg',
+    image: imgPrideMeme,
     options: [
       { id: 'a', text: 'งง ไม่เข้าใจมุก เลื่อนผ่านไปแบบมึนๆ', score: 0 },
       { id: 'b', text: 'พอเก็ตมุกบ้าง ขำตามเพื่อน', score: 1 },
@@ -174,7 +189,7 @@ export const questions: Question[] = [
     category: 'สายมู & สัญชาตญาณหัวใจ',
     hint: 'ศาสตร์แห่งจักรวาลและดวงชะตาชีวิตรัก',
     illustrationType: 'tarot',
-    image: '/src/assets/images/quiz_tarot_fortune_1790434253591.jpg',
+    image: imgTarotFortune,
     options: [
       { id: 'a', text: 'ไม่เคยอ่าน ไม่เชื่อเรื่องพวกนี้', score: 0 },
       { id: 'b', text: 'อ่านผ่านๆ เอาฮา ไม่ได้ซีเรียส', score: 1 },
@@ -188,7 +203,7 @@ export const questions: Question[] = [
     category: 'กูรูสไตล์ & สไตลิสต์ส่วนตัว',
     hint: 'เมื่อมีคนต้องการความช่วยเหลือเรื่องโทนสีและเสื้อผ้า',
     illustrationType: 'stylist',
-    image: '/src/assets/images/quiz_kpop_wonyoung_1790436416525.jpg',
+    image: imgKpopWonyoung,
     options: [
       { id: 'a', text: 'ไม่รู้เรื่องเลย ช่วยไม่ได้จริงๆ', score: 0 },
       { id: 'b', text: 'ให้ความเห็นได้นิดหน่อย "ก็สวยดีนะแก"', score: 1 },
@@ -202,7 +217,7 @@ export const questions: Question[] = [
     category: 'บทสรุปความจริงใจในหัวใจ',
     hint: 'ข้อสุดท้าย... ซื่อสัตย์กับความรู้สึกของตัวเองที่สุด!',
     illustrationType: 'spectrum',
-    image: '/src/assets/images/quiz_well_im_gay.gif',
+    image: imgWellImGay,
     options: [
       { id: 'a', text: 'สเตรท 100% ไม่มีข้อสงสัยในความตรงเป๊ะ', score: 0 },
       { id: 'b', text: 'ก็มีแอบคิดบ้างแหละ สับสนนิดๆ พอเป็นสีสัน', score: 1 },

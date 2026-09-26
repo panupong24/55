@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Question } from '../types';
 import { ChevronLeft, Info, Camera, Image, Mic, ThumbsUp } from 'lucide-react';
 
@@ -8,6 +8,13 @@ interface Props {
 
 export const QuestionIllustration: React.FC<Props> = ({ question }) => {
   const [imageFailed, setImageFailed] = useState(false);
+  const [retrySrc, setRetrySrc] = useState<string | null>(null);
+
+  // Reset image state whenever question changes
+  useEffect(() => {
+    setImageFailed(false);
+    setRetrySrc(null);
+  }, [question.id, question.image]);
 
   // Dedicated pixel-perfect Thai Facebook Messenger Mockup for Question 9 (Matches uploaded screenshot exactly)
   if (question.id === 9) {
@@ -146,13 +153,25 @@ export const QuestionIllustration: React.FC<Props> = ({ question }) => {
 
   // If question has a specific image (Q1, Q2, Q3, Q4, Q5, Q6, Q7, Q8, Q10, Q11, Q12, Q13, Q14, Q15)
   if (question.image && !imageFailed) {
+    const currentSrc = retrySrc || question.image;
+
     return (
       <div className="relative w-full aspect-[4/3] sm:aspect-[16/9] md:aspect-[4/3] rounded-2xl overflow-hidden bg-slate-900 border border-white/10 shadow-xl group">
         <img
-          src={question.image}
+          key={currentSrc}
+          src={currentSrc}
           alt={question.title}
           referrerPolicy="no-referrer"
-          onError={() => setImageFailed(true)}
+          onError={() => {
+            if (!retrySrc && question.image) {
+              const filename = question.image.split('/').pop()?.split('?')[0];
+              if (filename) {
+                setRetrySrc(`${import.meta.env.BASE_URL}images/${filename}`);
+                return;
+              }
+            }
+            setImageFailed(true);
+          }}
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
 

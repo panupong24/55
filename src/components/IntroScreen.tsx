@@ -12,6 +12,7 @@ import {
 import { motion } from 'motion/react';
 import { sound } from '../utils/audio';
 import { PWAInstallButton } from './PWAInstallButton';
+import heroImage from '../assets/images/hero_rainbow_quiz_1790434208133.jpg';
 
 interface Props {
   onStart: () => void;
@@ -38,7 +39,7 @@ export const IntroScreen: React.FC<Props> = ({ onStart, onOpenShare }) => {
         <div className="relative w-full aspect-[16/9] rounded-3xl overflow-hidden border-2 border-pink-500/30 shadow-2xl shadow-purple-500/20 bg-slate-900 group">
           {!heroFailed ? (
             <img
-              src="/src/assets/images/hero_rainbow_quiz_1790434208133.jpg"
+              src={heroImage}
               alt="Rainbow Vibe Quiz Hero"
               referrerPolicy="no-referrer"
               onError={() => setHeroFailed(true)}
