@@ -1,7 +1,8 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { AlertCircle, RotateCcw, X, Play } from 'lucide-react';
+import { RotateCcw, X, Play } from 'lucide-react';
 import { sound } from '../utils/audio';
+import { useLanguage } from '../i18n/LanguageContext';
 
 interface Props {
   isOpen: boolean;
@@ -18,6 +19,7 @@ export const ResetConfirmModal: React.FC<Props> = ({
   answeredCount,
   totalQuestions,
 }) => {
+  const { t } = useLanguage();
   if (!isOpen) return null;
 
   return (
@@ -46,7 +48,7 @@ export const ResetConfirmModal: React.FC<Props> = ({
               onClose();
             }}
             className="absolute top-4 right-4 p-2 rounded-full text-slate-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
-            aria-label="ปิดหน้าต่าง"
+            aria-label={t.close}
           >
             <X className="w-5 h-5" />
           </button>
@@ -57,44 +59,41 @@ export const ResetConfirmModal: React.FC<Props> = ({
           </div>
 
           <h3 className="text-xl sm:text-2xl font-black text-white mb-2">
-            เริ่มทำแบบทดสอบใหม่?
+            {t.resetModalTitle}
           </h3>
 
-          <p className="text-sm text-slate-300 mb-4 leading-relaxed">
-            {answeredCount > 0 ? (
-              <>
-                คุณได้ตอบแบบทดสอบไปแล้ว{' '}
-                <span className="font-bold text-pink-300">
-                  {answeredCount} จาก {totalQuestions} ข้อ
-                </span>
-                {' '}หากกดยืนยัน ข้อมูลคำตอบทั้งหมดที่บันทึกไว้จะถูกล้างและกลับสู่หน้าเริ่มต้น
-              </>
-            ) : (
-              'คุณต้องการเริ่มทำแบบทดสอบใหม่ใช่หรือไม่?'
-            )}
+          <p className="text-sm text-slate-300 leading-relaxed mb-4">
+            {t.resetModalDesc}
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-2.5 pt-2">
-            <button
-              onClick={() => {
-                sound.playSelect();
-                onClose();
-              }}
-              className="flex-1 py-3 px-4 rounded-xl bg-white/10 hover:bg-white/15 text-slate-200 hover:text-white font-bold text-sm transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95"
-            >
-              <Play className="w-4 h-4 text-yellow-300 fill-yellow-300" />
-              <span>ทำต่อจากเดิม</span>
-            </button>
+          {answeredCount > 0 && (
+            <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 mb-6 text-xs text-pink-200">
+              {answeredCount}/{totalQuestions}
+            </div>
+          )}
 
+          {/* Action buttons */}
+          <div className="flex flex-col sm:flex-row items-center gap-3">
             <button
               onClick={() => {
                 sound.playSelect();
                 onConfirm();
               }}
-              className="flex-1 py-3 px-4 rounded-xl bg-gradient-to-r from-pink-600 via-rose-600 to-purple-600 hover:opacity-95 text-white font-bold text-sm transition-all flex items-center justify-center gap-2 shadow-lg shadow-pink-500/20 cursor-pointer active:scale-95"
+              className="w-full sm:flex-1 py-3.5 px-5 rounded-2xl bg-gradient-to-r from-rose-600 via-pink-600 to-purple-600 hover:opacity-95 text-white font-black text-sm flex items-center justify-center gap-2 shadow-lg shadow-rose-600/30 transition-all cursor-pointer active:scale-95"
             >
               <RotateCcw className="w-4 h-4" />
-              <span>ยืนยันเริ่มใหม่</span>
+              <span>{t.resetModalConfirmBtn}</span>
+            </button>
+
+            <button
+              onClick={() => {
+                sound.playSelect();
+                onClose();
+              }}
+              className="w-full sm:flex-1 py-3.5 px-5 rounded-2xl bg-white/10 hover:bg-white/15 border border-white/15 text-slate-200 hover:text-white font-bold text-sm flex items-center justify-center gap-2 transition-all cursor-pointer active:scale-95"
+            >
+              <Play className="w-4 h-4 fill-slate-300" />
+              <span>{t.resetModalCancelBtn}</span>
             </button>
           </div>
         </motion.div>

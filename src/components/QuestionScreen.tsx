@@ -4,6 +4,7 @@ import { ArrowLeft, ArrowRight, CheckCircle2, Sparkles, RotateCcw, Save } from '
 import { Question, Option } from '../types';
 import { QuestionIllustration } from './QuestionIllustration';
 import { sound } from '../utils/audio';
+import { useLanguage } from '../i18n/LanguageContext';
 
 interface Props {
   question: Question;
@@ -26,6 +27,7 @@ export const QuestionScreen: React.FC<Props> = ({
   onPrev,
   onReset,
 }) => {
+  const { t } = useLanguage();
   const isFirst = currentIndex === 0;
   const isLast = currentIndex === totalQuestions - 1;
   const progressPercent = Math.round(((currentIndex + 1) / totalQuestions) * 100);
@@ -75,7 +77,9 @@ export const QuestionScreen: React.FC<Props> = ({
       <div className="mb-4 sm:mb-6">
         <div className="flex items-center justify-between text-xs text-slate-300 mb-2">
           <span className="font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 via-yellow-300 to-cyan-300 flex items-center gap-1.5 text-sm sm:text-base">
-            <span>คำถามข้อที่ {currentIndex + 1} จาก {totalQuestions}</span>
+            <span>
+              {t.questionProgress} {currentIndex + 1} / {totalQuestions}
+            </span>
             <Sparkles className="w-4 h-4 text-yellow-300" />
           </span>
           <span className="font-mono font-bold tabular-nums text-pink-300 bg-pink-500/20 border border-pink-400/40 px-2.5 py-0.5 rounded-full">
@@ -131,6 +135,7 @@ export const QuestionScreen: React.FC<Props> = ({
                       ? `${style.selected} shadow-lg ring-2 ring-pink-400/50`
                       : `bg-slate-900/70 hover:bg-slate-800/80 border-white/10 ${style.border} text-slate-100`
                   }`}
+                  aria-pressed={isSelected}
                 >
                   <div className="flex items-center gap-3.5 flex-1 min-w-0">
                     {/* Letter badge: a, b, c, d */}
@@ -170,9 +175,10 @@ export const QuestionScreen: React.FC<Props> = ({
                     ? 'opacity-30 border-white/5 text-slate-600 cursor-not-allowed'
                     : 'bg-white/10 hover:bg-white/15 border-white/20 text-slate-200 hover:text-white cursor-pointer active:scale-95'
                 }`}
+                aria-label={t.btnPrev}
               >
                 <ArrowLeft className="w-4 h-4" />
-                <span>ย้อนกลับ</span>
+                <span>{t.btnPrev}</span>
               </button>
 
               {onReset && (
@@ -182,20 +188,16 @@ export const QuestionScreen: React.FC<Props> = ({
                     onReset();
                   }}
                   className="px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-slate-400 hover:text-slate-200 border border-white/10 text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer active:scale-95"
-                  title="เริ่มทำใหม่ตั้งแต่ต้น"
+                  title={t.restartQuiz}
+                  aria-label={t.restartQuiz}
                 >
                   <RotateCcw className="w-3.5 h-3.5 text-pink-400" />
-                  <span>เริ่มใหม่</span>
+                  <span>{t.restartQuiz}</span>
                 </button>
               )}
             </div>
 
             <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
-              <span className="hidden md:inline-flex items-center gap-1 text-[11px] text-slate-400">
-                <Save className="w-3 h-3 text-emerald-400" />
-                <span>บันทึกความคืบหน้าอัตโนมัติ</span>
-              </span>
-
               <button
                 onClick={handleNextClick}
                 disabled={!selectedOptionId}
@@ -204,8 +206,9 @@ export const QuestionScreen: React.FC<Props> = ({
                     ? 'bg-gradient-to-r from-pink-500 via-rose-500 to-purple-600 hover:opacity-95 text-white cursor-pointer shadow-pink-500/30 active:scale-95 animate-rainbow'
                     : 'bg-white/5 text-slate-500 border border-white/5 cursor-not-allowed'
                 }`}
+                aria-label={isLast ? t.btnFinish : t.btnNext}
               >
-                <span>{isLast ? 'ดูผลสรุป % ความตัวแม่ 🌈' : 'ข้อถัดไป'}</span>
+                <span>{isLast ? t.btnFinish : t.btnNext}</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
             </div>
