@@ -7,13 +7,13 @@ import {
   Flame,
   ShieldAlert,
   Share2,
+  QrCode,
   Play,
   RotateCcw,
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { sound } from '../utils/audio';
 import { PWAInstallButton } from './PWAInstallButton';
-import { useLanguage } from '../i18n/LanguageContext';
 import heroImage from '../assets/images/hero_rainbow_quiz_1790434208133.jpg';
 
 interface Props {
@@ -33,7 +33,6 @@ export const IntroScreen: React.FC<Props> = ({
   onResume,
   onReset,
 }) => {
-  const { t } = useLanguage();
   const [heroFailed, setHeroFailed] = useState(false);
 
   const handleStart = () => {
@@ -68,30 +67,34 @@ export const IntroScreen: React.FC<Props> = ({
             <div className="w-full h-full bg-gradient-to-tr from-pink-600 via-purple-600 to-indigo-700 flex items-center justify-center p-6 text-center">
               <div className="space-y-2">
                 <span className="text-5xl">🌈✨</span>
-                <p className="text-white font-bold text-2xl">{t.introTitle}</p>
+                <p className="text-white font-bold text-2xl">แบบทดสอบดีกรีตัวแม่สายรุ้ง</p>
               </div>
             </div>
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent" />
-
+          
           <div className="absolute bottom-4 left-4 right-4 sm:bottom-6 sm:left-6 sm:right-6">
             <div className="flex flex-wrap items-center gap-2 mb-2">
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 text-white text-xs font-bold shadow-md shadow-pink-500/30">
-                <Sparkles className="w-3.5 h-3.5" /> {t.prideEdition} 🏳️‍🌈
+                <Sparkles className="w-3.5 h-3.5" /> LGBTQ+ Colorful Edition 🏳️‍🌈
               </span>
               <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-black/60 backdrop-blur-md border border-white/20 text-yellow-300 text-xs font-bold">
-                ✨ {t.introBadge}
+                ✨ 15 ข้อสุดฮา
               </span>
             </div>
             <h1 className="text-2xl sm:text-4xl font-black text-white tracking-tight text-balance">
-              {t.appName} 🌈
+              แบบทดสอบวัดดีกรีตัวแม่สายรุ้ง 🌈
             </h1>
           </div>
         </div>
 
         {/* Introduction Prose */}
         <div className="space-y-3 text-slate-200 text-sm sm:text-base leading-relaxed p-5 rounded-2xl bg-gradient-to-r from-pink-500/10 via-purple-500/10 to-indigo-500/10 border border-pink-500/20 backdrop-blur-md">
-          <p>{t.introSubtitle}</p>
+          <p>
+            เคยสงสัยไหมว่าอินเนอร์ของคุณซ่อนความปังในระดับไหน? เมื่อเพลง T-pop หรือ Lisa ดังขึ้นคุณสับขาทันทีไหม?
+            เห็นมีมไวรัลแล้วเก็ตไวกว่าใครหรือเปล่า? มาทดสอบความลื่นไหลและจิตวิญญาณแห่งสีสันผ่านคำถาม 15 ข้อ
+            ที่จะบอกผลลัพธ์เป็นเปอร์เซ็นต์ความตัวแม่ของคุณ พร้อมภาพประกอบสุดฮาทุกข้อ! ✨
+          </p>
         </div>
 
         {/* Mandatory Friendly Disclaimer */}
@@ -102,10 +105,11 @@ export const IntroScreen: React.FC<Props> = ({
             </div>
             <div className="space-y-1.5 text-xs sm:text-sm">
               <h3 className="font-bold text-amber-300 text-sm sm:text-base flex items-center gap-2">
-                <span>Friendly Notice 💖</span>
+                <span>แจ้งให้ทราบก่อนเข้าเล่นนะจ๊ะ! 💖</span>
               </h3>
               <p className="text-slate-200 leading-normal">
-                {t.introDisclaimer}
+                แบบทดสอบนี้จัดทำขึ้น <strong className="text-white font-bold bg-pink-500/30 px-1 py-0.5 rounded">เพื่อความบันเทิง คลายเครียด และเอาไว้เล่นกับเพื่อนแบบชิลๆ เท่านั้น</strong> 😄
+                ย้ำอีกทีว่าเป็นแค่ควิซกวนๆ เพื่อรอยยิ้ม <strong className="text-amber-300 font-bold underline decoration-amber-400/50">ไม่ใช่เครื่องมือวัดหรือตัดสินรสนิยมทางเพศจริงจังนะ!</strong> ขอให้ทุกคนเพลิดเพลินกับการตอบคำถามตามความรู้สึกจริง แล้วมารอดูกันว่าจะได้กี่ % กันนะ!
               </p>
             </div>
           </div>
@@ -118,8 +122,8 @@ export const IntroScreen: React.FC<Props> = ({
               <Eye className="w-4 h-4" />
             </div>
             <div>
-              <p className="font-bold text-white">{t.introQuestionCount}</p>
-              <p className="text-pink-300 text-xs">{t.introEstimatedTime}</p>
+              <p className="font-bold text-white">1 หน้าต่อ 1 คำถาม</p>
+              <p className="text-pink-300 text-xs">ภาพประกอบฮาๆ ครบทุกข้อ</p>
             </div>
           </div>
 
@@ -128,8 +132,8 @@ export const IntroScreen: React.FC<Props> = ({
               <Flame className="w-4 h-4" />
             </div>
             <div>
-              <p className="font-bold text-white">{t.introFeaturePrivacy}</p>
-              <p className="text-purple-300 text-xs">{t.introFeaturePrivacyDesc}</p>
+              <p className="font-bold text-white">ไม่เปิดเผยคะแนน</p>
+              <p className="text-purple-300 text-xs">ซ่อนคะแนนลับทุกข้อ</p>
             </div>
           </div>
 
@@ -138,8 +142,8 @@ export const IntroScreen: React.FC<Props> = ({
               <HeartHandshake className="w-4 h-4" />
             </div>
             <div>
-              <p className="font-bold text-white">{t.introInstantResult}</p>
-              <p className="text-emerald-300 text-xs">{t.introFeatureStory}</p>
+              <p className="font-bold text-white">สรุปผลเป็น %</p>
+              <p className="text-emerald-300 text-xs">รู้ผลทันทีเมื่อเล่นจบ</p>
             </div>
           </div>
         </div>
@@ -154,8 +158,10 @@ export const IntroScreen: React.FC<Props> = ({
                 </div>
                 <div>
                   <p className="font-black text-white text-sm sm:text-base">
-                    {t.introSavedNotice}{' '}
-                    <span className="font-bold text-yellow-300">{savedQuestionNumber}</span> / 15
+                    พบแบบทดสอบที่ทำค้างไว้!
+                  </p>
+                  <p className="text-xs text-pink-200">
+                    ตอบค้างอยู่ที่ข้อที่ <span className="font-bold text-yellow-300">{savedQuestionNumber}</span> จาก 15 ข้อ
                   </p>
                 </div>
               </div>
@@ -165,7 +171,7 @@ export const IntroScreen: React.FC<Props> = ({
                   className="flex-1 sm:flex-initial px-5 py-2.5 rounded-xl bg-gradient-to-r from-pink-500 to-purple-600 hover:opacity-95 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-md cursor-pointer active:scale-95 animate-rainbow"
                 >
                   <Play className="w-4 h-4 fill-white" />
-                  <span>{t.introResumeBtn}</span>
+                  <span>ทำต่อจากเดิม</span>
                 </button>
                 {onReset && (
                   <button
@@ -174,10 +180,10 @@ export const IntroScreen: React.FC<Props> = ({
                       onReset();
                     }}
                     className="px-3.5 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-slate-300 hover:text-white text-xs font-semibold flex items-center justify-center gap-1.5 border border-white/10 cursor-pointer active:scale-95"
-                    title={t.restartQuiz}
+                    title="ล้างข้อมูลและเริ่มใหม่"
                   >
                     <RotateCcw className="w-3.5 h-3.5" />
-                    <span>{t.restartQuiz}</span>
+                    <span>เริ่มใหม่</span>
                   </button>
                 )}
               </div>
@@ -188,7 +194,7 @@ export const IntroScreen: React.FC<Props> = ({
             onClick={handleStart}
             className="w-full py-4 sm:py-5 px-6 rounded-2xl bg-gradient-to-r from-pink-500 via-rose-500 via-amber-400 to-purple-600 hover:opacity-95 text-white font-black text-base sm:text-xl shadow-xl shadow-pink-500/30 flex items-center justify-center gap-3 transition-all transform active:scale-98 cursor-pointer animate-rainbow"
           >
-            <span>{t.introStartBtn}</span>
+            <span>{hasSavedProgress ? 'เริ่มทำใหม่ตั้งแต่ข้อ 1 (15 ข้อ) 🌈✨' : 'เริ่มทำแบบทดสอบเลย (15 ข้อ) 🌈✨'}</span>
             <ArrowRight className="w-6 h-6" />
           </button>
 
@@ -202,7 +208,7 @@ export const IntroScreen: React.FC<Props> = ({
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-white/10 hover:bg-white/15 border border-pink-400/30 text-pink-200 hover:text-white text-xs sm:text-sm font-bold transition cursor-pointer active:scale-95"
               >
                 <Share2 className="w-4 h-4 text-pink-400" />
-                <span>{t.shareQuiz}</span>
+                <span>แชร์ให้เพื่อน / เปิด QR Code</span>
               </button>
             )}
 
@@ -213,3 +219,4 @@ export const IntroScreen: React.FC<Props> = ({
     </div>
   );
 };
+

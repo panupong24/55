@@ -1,4 +1,6 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { questions } from './data/questions';
+import { calculateQuizResult } from './data/results';
 import { Option } from './types';
 import { Navbar } from './components/Navbar';
 import { IntroScreen } from './components/IntroScreen';
@@ -7,54 +9,11 @@ import { ResultScreen } from './components/ResultScreen';
 import { ShareModal } from './components/ShareModal';
 import { OfflineIndicator } from './components/OfflineIndicator';
 import { ResetConfirmModal } from './components/ResetConfirmModal';
-import { ReportModal } from './components/ReportModal';
-import { AdminPage } from './pages/AdminPage';
 import { quizStorage, QuizProgress } from './utils/quizStorage';
-import { useLanguage } from './i18n/LanguageContext';
-import { AlertTriangle } from 'lucide-react';
 
 type AppStep = 'INTRO' | 'QUIZ' | 'RESULT';
 
 export default function App() {
-  const { t, questions, getResultTier } = useLanguage();
-
-  // Route state supporting /admin navigation, direct URL loading, and GitHub Pages fallback redirect
-  const [currentPath, setCurrentPath] = useState<string>(() => {
-    if (typeof window !== 'undefined') {
-      const search = window.location.search;
-      if (search && search.startsWith('?/')) {
-        const decoded = search
-          .slice(1)
-          .split('&')
-          .map((s) => s.replace(/~and~/g, '&'));
-        const target = decoded[0];
-        const query = decoded.slice(1).length ? '?' + decoded.slice(1).join('&') : '';
-        const cleanPath = target.startsWith('/') ? target : '/' + target;
-        const cleanUrl = cleanPath + query + window.location.hash;
-        window.history.replaceState(null, '', cleanUrl);
-        return cleanPath;
-      }
-      return window.location.pathname;
-    }
-    return '/';
-  });
-
-  useEffect(() => {
-    const handlePopState = () => {
-      setCurrentPath(window.location.pathname);
-    };
-    window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
-  }, []);
-
-  const navigate = (path: string) => {
-    if (typeof window !== 'undefined') {
-      window.history.pushState({}, '', path);
-      setCurrentPath(path);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-  };
-
   // Synchronously load saved state from localStorage so page reload immediately restores where player left off
   const [initialProgress] = useState<QuizProgress | null>(() => quizStorage.loadProgress());
 
@@ -67,7 +26,7 @@ export default function App() {
 
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number>(() => {
     if (initialProgress && typeof initialProgress.currentQuestionIndex === 'number') {
-      return Math.min(Math.max(0, initialProgress.currentQuestionIndex), 14);
+      return Math.min(Math.max(0, initialProgress.currentQuestionIndex), questions.length - 1);
     }
     return 0;
   });
@@ -78,33 +37,20 @@ export default function App() {
 
   const [isShareOpen, setIsShareOpen] = useState(false);
   const [isResetModalOpen, setIsResetModalOpen] = useState(false);
-  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
-  const [reportTargetComment, setReportTargetComment] = useState<{
-    id: string;
-    comment: string;
-    userName: string;
-  } | null>(null);
-
   const [shareConfig, setShareConfig] = useState<{
     percentage?: number;
     tier?: any;
     initialTab?: 'social' | 'qr' | 'card';
   }>({});
 
-  const currentQuestion = questions[currentQuestionIndex] || questions[0];
+  const currentQuestion = questions[currentQuestionIndex];
   const selectedAnswer = answers[currentQuestionIndex];
   const answeredCount = Object.keys(answers).length;
   const hasSavedProgress = answeredCount > 0;
 
-  // Calculate percentage and tier dynamically using localized tier text
-  const result = useMemo(() => {
-    const scoreList = Object.values(answers).map((a) => a.score);
-    const totalScore = scoreList.reduce((sum, current) => sum + current, 0);
-    const rawPercentage = 25 + (totalScore / 45) * 75;
-    const percentage = Math.min(100, Math.max(25, Math.round(rawPercentage)));
-    const tier = getResultTier(percentage);
-    return { percentage, tier };
-  }, [answers, getResultTier]);
+  // Calculate percentage and tier strictly internally (Hidden from players)
+  const scoreList = Object.values(answers).map((a) => a.score);
+  const result = calculateQuizResult(scoreList);
 
   // Handler to open ShareModal with real, latest result props guaranteed
   const handleOpenShare = useCallback(
@@ -113,18 +59,23 @@ export default function App() {
       tier?: any;
       initialTab?: 'social' | 'qr' | 'card';
     }) => {
+      // Guaranteed to use latest player result props
+      const currentScoreList = Object.values(answers).map((a) => a.score);
+      const computedResult =
+        currentScoreList.length > 0 ? calculateQuizResult(currentScoreList) : result;
+
       const activePercentage =
         config?.percentage !== undefined
           ? config.percentage
-          : step === 'RESULT' || answeredCount > 0
-            ? result.percentage
+          : step === 'RESULT' || currentScoreList.length > 0
+            ? computedResult.percentage
             : undefined;
 
       const activeTier =
         config?.tier !== undefined
           ? config.tier
-          : step === 'RESULT' || answeredCount > 0
-            ? result.tier
+          : step === 'RESULT' || currentScoreList.length > 0
+            ? computedResult.tier
             : undefined;
 
       setShareConfig({
@@ -134,7 +85,7 @@ export default function App() {
       });
       setIsShareOpen(true);
     },
-    [answeredCount, result, step],
+    [answers, result, step],
   );
 
   // Start fresh from question 1
@@ -185,7 +136,7 @@ export default function App() {
       quizStorage.saveProgress('RESULT', currentQuestionIndex, answers);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
-  }, [answers, currentQuestionIndex, questions.length]);
+  }, [answers, currentQuestionIndex]);
 
   // Navigate to Previous question
   const handlePrev = useCallback(() => {
@@ -216,26 +167,9 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleOpenReportModal = (commentTarget?: {
-    id: string;
-    comment: string;
-    userName: string;
-  }) => {
-    setReportTargetComment(commentTarget || null);
-    setIsReportModalOpen(true);
-  };
-
   // Keyboard navigation for power users (a, b, c, d or 1, 2, 3, 4, Enter, ArrowLeft)
   useEffect(() => {
-    if (
-      currentPath.toLowerCase().startsWith('/admin') ||
-      step !== 'QUIZ' ||
-      isResetModalOpen ||
-      isShareOpen ||
-      isReportModalOpen
-    ) {
-      return;
-    }
+    if (step !== 'QUIZ' || isResetModalOpen || isShareOpen) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
       const key = e.key.toLowerCase();
@@ -266,25 +200,8 @@ export default function App() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [
-    currentPath,
-    step,
-    currentQuestion,
-    selectedAnswer,
-    handleSelectOption,
-    handleNext,
-    handlePrev,
-    isResetModalOpen,
-    isShareOpen,
-    isReportModalOpen,
-  ]);
+  }, [step, currentQuestion, selectedAnswer, handleSelectOption, handleNext, handlePrev, isResetModalOpen, isShareOpen]);
 
-  // Route /admin renders the dedicated full-page AdminPage
-  if (currentPath.toLowerCase().startsWith('/admin')) {
-    return <AdminPage onNavigateHome={() => navigate('/')} />;
-  }
-
-  // Main Public Quiz View (Zero Admin buttons, triggers, or modals)
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-pink-500 selection:text-white relative overflow-x-hidden">
       {/* Offline Status Indicator */}
@@ -345,7 +262,6 @@ export default function App() {
                 },
               )
             }
-            onOpenReportModal={handleOpenReportModal}
           />
         )}
       </main>
@@ -368,23 +284,13 @@ export default function App() {
         totalQuestions={questions.length}
       />
 
-      {/* Report / Feedback Modal */}
-      <ReportModal
-        isOpen={isReportModalOpen}
-        onClose={() => {
-          setIsReportModalOpen(false);
-          setReportTargetComment(null);
-        }}
-        targetComment={reportTargetComment}
-      />
-
-      {/* Clean Public Footer (Strictly NO Admin button, login link, or email) */}
+      {/* Festive Pride Footer */}
       <footer className="py-5 border-t border-pink-500/20 text-center text-xs text-slate-400 relative z-10 bg-slate-950/80 backdrop-blur-md">
         <div className="max-w-4xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <span className="font-semibold text-slate-200">🌈 {t.appName}</span>
+            <span className="font-semibold text-slate-200">🌈 Rainbow Vibe Quiz</span>
             <span className="text-slate-600">·</span>
-            <span className="text-pink-300">{t.prideEdition}</span>
+            <span className="text-pink-300">Pride Edition</span>
           </div>
 
           <div className="flex items-center gap-3">
@@ -392,16 +298,10 @@ export default function App() {
               onClick={() => handleOpenShare({ initialTab: 'social' })}
               className="text-pink-300 hover:text-pink-200 underline font-medium cursor-pointer"
             >
-              {t.shareQuiz}
+              แชร์เว็บ & QR Code
             </button>
             <span className="text-slate-600">·</span>
-            <button
-              onClick={() => handleOpenReportModal()}
-              className="text-slate-300 hover:text-pink-300 flex items-center gap-1 font-medium cursor-pointer transition"
-            >
-              <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />
-              <span>{t.btnOpenFeedback}</span>
-            </button>
+            <span className="text-slate-500">15 ข้อจัดเต็ม · สรุปผล % ทันที</span>
           </div>
         </div>
       </footer>
