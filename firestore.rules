@@ -10,14 +10,17 @@ service cloud.firestore {
     function isAdmin() {
       return isAuthenticated() && (
         exists(/databases/$(database)/documents/admins/$(request.auth.uid)) ||
-        request.auth.token.email == '684234020@parichat.skru.ac.th'
+        (request.auth.token.email != null && request.auth.token.email.lower() == '684234020@parichat.skru.ac.th')
       );
     }
 
     // Admins registry
     match /admins/{uid} {
       allow read: if isAuthenticated() && (request.auth.uid == uid || isAdmin());
-      allow write: if isAdmin();
+      allow write: if isAuthenticated() && (
+        (request.auth.uid == uid && request.auth.token.email != null && request.auth.token.email.lower() == '684234020@parichat.skru.ac.th') ||
+        isAdmin()
+      );
     }
 
     // Community reviews

@@ -218,8 +218,37 @@ class FeedbackService {
     return [...filtered].sort((a, b) => b.createdAt - a.createdAt);
   }
 
-  public async getReviews(includeHidden = false): Promise<Review[]> {
+  public async fetchReviewsFromFirestore(includeHidden = false): Promise<Review[]> {
+    try {
+      const qReviews = query(collection(db, 'reviews'), orderBy('createdAt', 'desc'));
+      const snapshot = await getDocs(qReviews);
+      const list: Review[] = [];
+      snapshot.forEach((d) => {
+        const data = d.data();
+        list.push({
+          id: d.id,
+          rating: data.rating || 5,
+          comment: data.comment || '',
+          userName: data.userName || 'Rainbow Friend',
+          percentage: data.percentage,
+          tierBadge: data.tierBadge,
+          createdAt: data.createdAt || Date.now(),
+          reported: !!data.reported,
+          hidden: !!data.hidden,
+        });
+      });
+      if (list.length > 0) {
+        this.reviewsCache = list;
+        this.saveReviewsToLocalStorage(list);
+      }
+    } catch (err) {
+      console.warn('Could not fetch reviews from Firestore, using cache:', err);
+    }
     return this.getReviewsSync(includeHidden);
+  }
+
+  public async getReviews(includeHidden = false): Promise<Review[]> {
+    return this.fetchReviewsFromFirestore(includeHidden);
   }
 
   public async submitReview(input: {
@@ -455,38 +484,53 @@ class FeedbackService {
   public async toggleHideReview(
     reviewId: string,
     hidden: boolean,
-  ): Promise<boolean> {
-    try {
-      const docRef = doc(db, 'reviews', reviewId);
-      await updateDoc(docRef, { hidden });
-    } catch (err) {
-      console.warn('Firestore toggleHideReview failed:', err);
-    }
-
+  ): Promise<{ success: boolean; error?: string }> {
     const reviews = this.reviewsCache || this.loadReviewsFromLocalStorage();
     const target = reviews.find((r) => r.id === reviewId);
-    if (target) {
-      target.hidden = hidden;
-      this.saveReviewsToLocalStorage(reviews);
-      this.notifyReviewListeners();
+    if (!target) {
+      return { success: false, error: 'ไม่พบคอมเมนต์ที่ต้องการจัดการ' };
     }
-    return true;
+
+    try {
+      // Only changes visibility on the existing Firestore review document.
+      await updateDoc(doc(db, 'reviews', reviewId), { hidden });
+    } catch (err) {
+      console.error('Firestore toggleHideReview failed:', err);
+      return {
+        success: false,
+        error: 'บันทึกสถานะไม่สำเร็จ กรุณาตรวจสอบสิทธิ์ผู้ดูแลหรือการเชื่อมต่อ แล้วลองใหม่',
+      };
+    }
+
+    target.hidden = hidden;
+    this.saveReviewsToLocalStorage(reviews);
+    this.notifyReviewListeners();
+    return { success: true };
   }
 
-  public async deleteReview(reviewId: string): Promise<boolean> {
-    try {
-      const docRef = doc(db, 'reviews', reviewId);
-      await deleteDoc(docRef);
-    } catch (err) {
-      console.warn('Firestore deleteReview failed:', err);
+  public async deleteReview(
+    reviewId: string,
+  ): Promise<{ success: boolean; error?: string }> {
+    const reviews = this.reviewsCache || this.loadReviewsFromLocalStorage();
+    if (!reviews.some((review) => review.id === reviewId)) {
+      return { success: false, error: 'ไม่พบคอมเมนต์ที่ต้องการลบ' };
     }
 
-    const reviews = this.reviewsCache || this.loadReviewsFromLocalStorage();
-    const filtered = reviews.filter((r) => r.id !== reviewId);
+    try {
+      await deleteDoc(doc(db, 'reviews', reviewId));
+    } catch (err) {
+      console.error('Firestore deleteReview failed:', err);
+      return {
+        success: false,
+        error: 'ลบคอมเมนต์ไม่สำเร็จ กรุณาตรวจสอบสิทธิ์ผู้ดูแลหรือการเชื่อมต่อ แล้วลองใหม่',
+      };
+    }
+
+    const filtered = reviews.filter((review) => review.id !== reviewId);
     this.reviewsCache = filtered;
     this.saveReviewsToLocalStorage(filtered);
     this.notifyReviewListeners();
-    return true;
+    return { success: true };
   }
 
   public async deleteReport(reportId: string): Promise<boolean> {

@@ -80,6 +80,9 @@ export const AdminPage: React.FC<Props> = ({ onNavigateHome }) => {
   const [reports, setReports] = useState<ReportIssue[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [statusFilter, setStatusFilter] = useState<'all' | 'new' | 'investigating' | 'resolved'>('all');
+  const [reviewPendingDelete, setReviewPendingDelete] = useState<string | null>(null);
+  const [isDeletingReview, setIsDeletingReview] = useState(false);
+  const [deleteReviewError, setDeleteReviewError] = useState('');
 
   const consoleLinks = getFirebaseConsoleLinks();
 
@@ -255,16 +258,39 @@ export const AdminPage: React.FC<Props> = ({ onNavigateHome }) => {
     currentHidden: boolean,
   ) => {
     sound.playSelect();
-    await feedbackService.toggleHideReview(reviewId, !currentHidden);
-    loadData();
+    const result = await feedbackService.toggleHideReview(reviewId, !currentHidden);
+    if (!result.success) {
+      window.alert(result.error || 'ไม่สามารถเปลี่ยนสถานะคอมเมนต์ได้');
+      return;
+    }
+    await loadData();
   };
 
-  const handleDeleteReview = async (reviewId: string) => {
-    if (confirm('Delete this review permanently?')) {
-      sound.playSelect();
-      await feedbackService.deleteReview(reviewId);
-      loadData();
+  const handleDeleteReview = (reviewId: string) => {
+    setDeleteReviewError('');
+    setReviewPendingDelete(reviewId);
+  };
+
+  const confirmDeleteReview = async () => {
+    if (!reviewPendingDelete || isDeletingReview) return;
+    setIsDeletingReview(true);
+    sound.playSelect();
+    const result = await feedbackService.deleteReview(reviewPendingDelete);
+    setIsDeletingReview(false);
+
+    if (!result.success) {
+      setDeleteReviewError(result.error || 'ไม่สามารถลบคอมเมนต์ได้');
+      return;
     }
+
+    setReviewPendingDelete(null);
+    await loadData();
+  };
+
+  const cancelDeleteReview = () => {
+    if (isDeletingReview) return;
+    setDeleteReviewError('');
+    setReviewPendingDelete(null);
   };
 
   const handleDeleteReport = async (reportId: string) => {
@@ -785,7 +811,7 @@ export const AdminPage: React.FC<Props> = ({ onNavigateHome }) => {
                         <div className="flex items-center justify-end gap-2 pt-3 border-t border-white/10">
                           <button
                             onClick={() =>
-                              handleToggleHideReview(rev.id, !rev.hidden)
+                              handleToggleHideReview(rev.id, rev.hidden)
                             }
                             className={`px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition cursor-pointer ${
                               rev.hidden
@@ -823,6 +849,24 @@ export const AdminPage: React.FC<Props> = ({ onNavigateHome }) => {
           </div>
         )}
       </main>
+      {reviewPendingDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="delete-review-title">
+          <div className="w-full max-w-md rounded-2xl border border-rose-400/30 bg-slate-900 p-6 shadow-2xl">
+            <div className="flex items-start gap-3">
+              <div className="rounded-xl bg-rose-500/15 p-2.5 text-rose-300"><Trash2 className="h-5 w-5" /></div>
+              <div>
+                <h2 id="delete-review-title" className="text-lg font-bold text-white">ลบคอมเมนต์นี้ถาวร?</h2>
+                <p className="mt-1 text-sm leading-relaxed text-slate-300">การลบจะไม่สามารถกู้คืนได้ และคอมเมนต์จะหายจากหน้าเว็บทันที</p>
+              </div>
+            </div>
+            {deleteReviewError && (<p role="alert" className="mt-4 rounded-xl border border-rose-400/30 bg-rose-500/10 px-3 py-2 text-sm text-rose-200">{deleteReviewError}</p>)}
+            <div className="mt-6 flex justify-end gap-3">
+              <button type="button" onClick={cancelDeleteReview} disabled={isDeletingReview} className="rounded-xl border border-white/15 px-4 py-2 text-sm font-bold text-slate-200 transition hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-60">ยกเลิก</button>
+              <button type="button" onClick={confirmDeleteReview} disabled={isDeletingReview} className="rounded-xl bg-rose-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-rose-500 disabled:cursor-not-allowed disabled:opacity-60">{isDeletingReview ? 'กำลังลบ…' : 'ลบถาวร'}</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
