@@ -8,11 +8,11 @@ import {
   QrCode,
   Download,
   Sparkles,
-  ExternalLink,
   RotateCw,
 } from 'lucide-react';
 import { QuizResultTier } from '../types';
 import { sound } from '../utils/audio';
+import { useLanguage } from '../i18n/LanguageContext';
 
 interface Props {
   isOpen: boolean;
@@ -22,16 +22,17 @@ interface Props {
   initialTab?: 'social' | 'qr' | 'card';
 }
 
-// Robust text wrapping helper for canvas with Thai language word segmentation
-function wrapThaiText(
+// Robust text wrapping helper for canvas with multi-language & Thai word segmentation
+function wrapAnyText(
   ctx: CanvasRenderingContext2D,
   text: string,
   maxWidth: number,
+  lang: string = 'th',
 ): string[] {
   let segments: string[];
   try {
     if (typeof Intl !== 'undefined' && 'Segmenter' in Intl) {
-      const segmenter = new (Intl as any).Segmenter('th', { granularity: 'word' });
+      const segmenter = new (Intl as any).Segmenter(lang, { granularity: 'word' });
       segments = Array.from(segmenter.segment(text), (s: any) => s.segment);
     } else {
       segments = text.includes(' ') ? text.split(' ') : text.split('');
@@ -65,6 +66,7 @@ export const ShareModal: React.FC<Props> = ({
   tier,
   initialTab = 'social',
 }) => {
+  const { t, lang } = useLanguage();
   const [copied, setCopied] = useState(false);
   const [qrDataUrl, setQrDataUrl] = useState<string>('');
   const [activeTab, setActiveTab] = useState<'social' | 'qr' | 'card'>(initialTab);
@@ -90,11 +92,14 @@ export const ShareModal: React.FC<Props> = ({
 
   const shareTitle =
     percentage !== undefined && tier
-      ? `🌈 ฉันได้ผลลัพธ์ดีกรีตัวแม่ ${percentage}%: "${tier.title}" (${tier.badge}) | แบบทดสอบ Rainbow Vibe Quiz`
-      : `🌈 Rainbow Vibe Quiz — แบบทดสอบวัดดีกรีตัวแม่สายรุ้งสุดฮา 15 ข้อ`;
+      ? t.shareTitleTemplate
+          .replace('{score}', `${percentage}`)
+          .replace('{title}', tier.title)
+          .replace('{badge}', tier.badge)
+      : t.shareGenericTitle;
 
   const shareDescription =
-    tier?.quote || 'มาลองวัดเปอร์เซ็นต์ความตัวแม่สายรุ้งของคุณกัน!';
+    tier?.quote || 'Come test your Rainbow Vibe Degree!';
 
   // Generate QR Code
   useEffect(() => {
@@ -112,7 +117,7 @@ export const ShareModal: React.FC<Props> = ({
     }
   }, [isOpen, currentUrl]);
 
-  // Generate Image Card for Social Stories using REAL result props
+  // Generate Image Card for Social Stories using REAL localized result props
   const generateShareCard = useCallback(async () => {
     setGeneratingCard(true);
 
@@ -194,11 +199,11 @@ export const ShareModal: React.FC<Props> = ({
       ctx.textAlign = 'center';
       ctx.fillStyle = '#f472b6';
       ctx.font = 'bold 34px "Prompt", sans-serif';
-      ctx.fillText('🌈 RAINBOW VIBE QUIZ 🏳️‍🌈', 540, 160);
+      ctx.fillText(t.canvasHeader, 540, 160);
 
       ctx.fillStyle = '#94a3b8';
       ctx.font = '24px "Prompt", sans-serif';
-      ctx.fillText('แบบทดสอบวัดดีกรีตัวแม่สายรุ้งสุดฮา 15 ข้อ', 540, 205);
+      ctx.fillText(t.canvasSubtitle, 540, 205);
 
       // 6. Score Badge Pill
       const badgeText = tier?.badge ? `🏳️‍🌈 ${tier.badge} 🏳️‍🌈` : '✨ RAINBOW VIBE ✨';
@@ -226,7 +231,7 @@ export const ShareModal: React.FC<Props> = ({
       ctx.textAlign = 'center';
       ctx.fillStyle = '#fb7185';
       ctx.font = 'bold 26px "Prompt", sans-serif';
-      ctx.fillText('สรุปผลดีกรีความตัวแม่ของคุณ', 540, 360);
+      ctx.fillText(t.canvasScoreLabel, 540, 360);
 
       ctx.save();
       ctx.font = '900 150px "Prompt", sans-serif';
@@ -235,11 +240,11 @@ export const ShareModal: React.FC<Props> = ({
       ctx.fillText(displayScore, 540, 500);
       ctx.restore();
 
-      // 8. Tier Title (Wrapped with Thai word segmentation)
-      const tierTitle = tier?.title || 'ตัวแม่สายรุ้งตัวจริงเสียงจริง';
+      // 8. Tier Title (Wrapped with language word segmentation)
+      const tierTitle = tier?.title || 'Rainbow Vibe Icon';
       ctx.font = 'bold 44px "Prompt", sans-serif';
       ctx.fillStyle = '#ffffff';
-      const titleLines = wrapThaiText(ctx, tierTitle, 860);
+      const titleLines = wrapAnyText(ctx, tierTitle, 860, lang);
       let currentY = 570;
       for (const line of titleLines.slice(0, 2)) {
         ctx.fillText(line, 540, currentY);
@@ -250,7 +255,7 @@ export const ShareModal: React.FC<Props> = ({
       if (tier?.tagline) {
         ctx.fillStyle = '#fbcfe8';
         ctx.font = '600 25px "Prompt", sans-serif';
-        const taglineLines = wrapThaiText(ctx, `✨ ${tier.tagline}`, 860);
+        const taglineLines = wrapAnyText(ctx, `✨ ${tier.tagline}`, 860, lang);
         for (const line of taglineLines.slice(0, 2)) {
           ctx.fillText(line, 540, currentY);
           currentY += 36;
@@ -265,7 +270,7 @@ export const ShareModal: React.FC<Props> = ({
         const quoteW = 860;
         const quoteX = 540 - quoteW / 2;
         ctx.font = 'italic 25px "Prompt", sans-serif';
-        const quoteLines = wrapThaiText(ctx, `“${tier.quote}”`, quoteW - 60);
+        const quoteLines = wrapAnyText(ctx, `“${tier.quote}”`, quoteW - 60, lang);
         const quoteH = Math.max(86, quoteLines.length * 36 + 32);
 
         ctx.beginPath();
@@ -292,7 +297,7 @@ export const ShareModal: React.FC<Props> = ({
         const descW = 860;
         const descX = 540 - descW / 2;
         ctx.font = '22px "Prompt", sans-serif';
-        const descLines = wrapThaiText(ctx, tier.description, descW - 50);
+        const descLines = wrapAnyText(ctx, tier.description, descW - 50, lang);
         const descH = Math.min(170, descLines.length * 32 + 30);
 
         ctx.beginPath();
@@ -319,7 +324,7 @@ export const ShareModal: React.FC<Props> = ({
         ctx.textAlign = 'left';
         ctx.fillStyle = '#f472b6';
         ctx.font = 'bold 22px "Prompt", sans-serif';
-        ctx.fillText('📊 ระดับทักษะความตัวแม่:', 110, currentY + 20);
+        ctx.fillText(t.canvasTraitsLabel, 110, currentY + 20);
         currentY += 32;
 
         const traitW = 860;
@@ -352,7 +357,7 @@ export const ShareModal: React.FC<Props> = ({
         const advW = 860;
         const advX = 540 - advW / 2;
         ctx.font = '22px "Prompt", sans-serif';
-        const advLines = wrapThaiText(ctx, `💡 คำแนะนำประจำตัว: ${tier.advice}`, advW - 50);
+        const advLines = wrapAnyText(ctx, `${t.canvasAdviceLabel} ${tier.advice}`, advW - 50, lang);
         const advH = Math.min(130, advLines.length * 32 + 30);
 
         ctx.beginPath();
@@ -378,33 +383,33 @@ export const ShareModal: React.FC<Props> = ({
       ctx.textAlign = 'center';
       ctx.fillStyle = '#38bdf8';
       ctx.font = 'bold 26px "Prompt", sans-serif';
-      ctx.fillText('🔗 เล่นและแชร์ได้ที่: https://www.gaykub.online', 540, footerY);
+      ctx.fillText(t.canvasFooterUrl, 540, footerY);
 
       ctx.fillStyle = '#94a3b8';
       ctx.font = '20px "Prompt", sans-serif';
-      ctx.fillText('สแกนหรือคลิกเล่นเพื่อวัดดีกรีความตัวแม่ของคุณ!', 540, footerY + 36);
+      ctx.fillText(t.canvasFooterCta, 540, footerY + 36);
 
       const dataUrl = canvas.toDataURL('image/png');
       setCardDataUrl(dataUrl);
-      generatedKeyRef.current = `${percentage ?? 'na'}_${tier?.title ?? 'na'}`;
+      generatedKeyRef.current = `${percentage ?? 'na'}_${tier?.title ?? 'na'}_${lang}`;
     } catch (err) {
       console.error('Error generating card image:', err);
     } finally {
       setGeneratingCard(false);
     }
-  }, [percentage, tier]);
+  }, [percentage, tier, lang, t]);
 
-  // Synchronize card data URL whenever props change or tab is switched to 'card'
+  // Synchronize card data URL whenever props or lang change or tab is switched to 'card'
   useEffect(() => {
     if (!isOpen) return;
 
-    const currentKey = `${percentage ?? 'na'}_${tier?.title ?? 'na'}`;
+    const currentKey = `${percentage ?? 'na'}_${tier?.title ?? 'na'}_${lang}`;
     const needsRegen = generatedKeyRef.current !== currentKey;
 
     if (activeTab === 'card' && (needsRegen || !cardDataUrl)) {
       generateShareCard();
     }
-  }, [isOpen, activeTab, percentage, tier, cardDataUrl, generateShareCard]);
+  }, [isOpen, activeTab, percentage, tier, lang, cardDataUrl, generateShareCard]);
 
   if (!isOpen) return null;
 
@@ -495,17 +500,15 @@ export const ShareModal: React.FC<Props> = ({
             </div>
             <div>
               <h2 className="text-lg font-bold text-white leading-tight">
-                เผยแพร่ & แชร์ผลลัพธ์
+                {t.shareModalTitle}
               </h2>
-              <p className="text-xs text-pink-200">
-                {percentage !== undefined ? `ผลลัพธ์ของคุณ: ${percentage}%` : 'ส่งต่อความสนุกให้เพื่อนมาเล่น'}
-              </p>
+              <p className="text-xs text-pink-200">{t.shareModalSubtitle}</p>
             </div>
           </div>
           <button
             onClick={onClose}
             className="p-2 rounded-full text-slate-400 hover:text-white hover:bg-white/10 transition cursor-pointer"
-            aria-label="ปิดหน้าต่าง"
+            aria-label={t.close}
           >
             <X className="w-5 h-5" />
           </button>
@@ -522,7 +525,7 @@ export const ShareModal: React.FC<Props> = ({
             }`}
           >
             <Share2 className="w-4 h-4" />
-            <span>แชร์โซเชียล</span>
+            <span>{t.tabSocial}</span>
           </button>
 
           <button
@@ -534,7 +537,7 @@ export const ShareModal: React.FC<Props> = ({
             }`}
           >
             <QrCode className="w-4 h-4" />
-            <span>QR Code</span>
+            <span>{t.tabQr}</span>
           </button>
 
           <button
@@ -548,7 +551,7 @@ export const ShareModal: React.FC<Props> = ({
             }`}
           >
             <Download className="w-4 h-4 text-yellow-300" />
-            <span>การ์ดรูปภาพ</span>
+            <span>{t.tabCard}</span>
           </button>
         </div>
 
@@ -575,35 +578,35 @@ export const ShareModal: React.FC<Props> = ({
                   className="py-3 px-4 rounded-2xl bg-gradient-to-r from-pink-500 to-purple-600 hover:opacity-95 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg shadow-pink-500/20 transition cursor-pointer"
                 >
                   <Share2 className="w-4 h-4" />
-                  <span>แชร์ไปยังแอปต่างๆ (Share)</span>
+                  <span>{t.shareViaApp}</span>
                 </button>
 
                 <button
                   onClick={handleLineShare}
                   className="py-3 px-4 rounded-2xl bg-[#06c755] hover:bg-[#05b34c] text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition cursor-pointer"
                 >
-                  <span>แชร์ไปยัง LINE</span>
+                  <span>{t.shareViaLine}</span>
                 </button>
 
                 <button
                   onClick={handleFacebookShare}
                   className="py-3 px-4 rounded-2xl bg-[#1877f2] hover:bg-[#166fe5] text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition cursor-pointer"
                 >
-                  <span>แชร์ลง Facebook</span>
+                  <span>{t.shareViaFacebook}</span>
                 </button>
 
                 <button
                   onClick={handleTwitterShare}
                   className="py-3 px-4 rounded-2xl bg-black hover:bg-slate-800 border border-white/20 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition cursor-pointer"
                 >
-                  <span>โพสต์ลง X (Twitter)</span>
+                  <span>{t.shareViaTwitter}</span>
                 </button>
               </div>
 
               {/* URL Box */}
               <div className="space-y-1.5 pt-2">
                 <label className="text-xs font-semibold text-slate-300">
-                  คัดลอกลิงก์สำหรับแชร์:
+                  {t.copyShareLink}
                 </label>
                 <div className="flex items-center gap-2 bg-slate-950 p-2 rounded-2xl border border-white/10">
                   <input
@@ -619,12 +622,12 @@ export const ShareModal: React.FC<Props> = ({
                     {copied ? (
                       <>
                         <Check className="w-4 h-4 text-emerald-300" />
-                        <span>คัดลอกแล้ว!</span>
+                        <span>{t.copied}</span>
                       </>
                     ) : (
                       <>
                         <Copy className="w-4 h-4" />
-                        <span>คัดลอก</span>
+                        <span>{t.copy}</span>
                       </>
                     )}
                   </button>
@@ -645,18 +648,16 @@ export const ShareModal: React.FC<Props> = ({
                   />
                 ) : (
                   <div className="w-56 h-56 flex items-center justify-center text-slate-400">
-                    กำลังสร้าง QR Code...
+                    Generating QR Code...
                   </div>
                 )}
               </div>
 
               <div className="text-xs text-slate-300 max-w-sm">
                 <p className="font-semibold text-white mb-1">
-                  สแกนด้วยกล้องมือถือเพื่อเข้าเล่นได้ทันที!
+                  {t.qrInstructionTitle}
                 </p>
-                <p className="text-slate-400">
-                  เหมาะสำหรับเปิดบนหน้าจอ ปาร์ตี้ สื่อสิ่งพิมพ์ หรือป้ายยาเพื่อนๆ ในกลุ่ม
-                </p>
+                <p className="text-slate-400">{t.qrInstructionDesc}</p>
               </div>
 
               <button
@@ -664,7 +665,7 @@ export const ShareModal: React.FC<Props> = ({
                 className="py-2.5 px-5 rounded-xl bg-white/10 hover:bg-white/15 border border-white/20 text-white font-bold text-xs sm:text-sm flex items-center gap-2 transition cursor-pointer active:scale-95"
               >
                 <Download className="w-4 h-4 text-pink-400" />
-                <span>บันทึกรูป QR Code ลงเครื่อง</span>
+                <span>{t.btnDownloadQr}</span>
               </button>
             </div>
           )}
@@ -677,7 +678,10 @@ export const ShareModal: React.FC<Props> = ({
                 <span className="text-pink-300 font-bold flex items-center gap-1.5">
                   <Sparkles className="w-3.5 h-3.5 text-yellow-300" />
                   <span>
-                    การ์ดผลลัพธ์จริง: <strong className="text-white font-black">{percentage !== undefined ? `${percentage}%` : 'แบบทดสอบ'}</strong>
+                    {t.storyCardStatusReal}{' '}
+                    <strong className="text-white font-black">
+                      {percentage !== undefined ? `${percentage}%` : t.appName}
+                    </strong>
                     {tier?.badge ? ` (${tier.badge})` : ''}
                   </span>
                 </span>
@@ -686,10 +690,14 @@ export const ShareModal: React.FC<Props> = ({
                   onClick={() => generateShareCard()}
                   disabled={generatingCard}
                   className="text-slate-400 hover:text-white flex items-center gap-1 cursor-pointer transition disabled:opacity-50"
-                  title="เรนเดอร์ภาพใหม่"
+                  title={t.btnReloadCard}
                 >
-                  <RotateCw className={`w-3.5 h-3.5 ${generatingCard ? 'animate-spin text-pink-400' : ''}`} />
-                  <span>โหลดใหม่</span>
+                  <RotateCw
+                    className={`w-3.5 h-3.5 ${
+                      generatingCard ? 'animate-spin text-pink-400' : ''
+                    }`}
+                  />
+                  <span>{t.btnReloadCard}</span>
                 </button>
               </div>
 
@@ -697,14 +705,14 @@ export const ShareModal: React.FC<Props> = ({
                 <div className="w-full max-w-xs aspect-[9/16] bg-slate-950/80 rounded-2xl border-2 border-pink-500/40 flex flex-col items-center justify-center p-6 space-y-3">
                   <div className="w-10 h-10 border-4 border-pink-500 border-t-transparent rounded-full animate-spin" />
                   <p className="text-sm font-bold text-pink-300 animate-pulse">
-                    กำลังเรนเดอร์การ์ดรูปภาพของคุณ ({percentage !== undefined ? `${percentage}%` : ''})...
+                    {t.storyCardGenerating} ({percentage !== undefined ? `${percentage}%` : ''})...
                   </p>
                 </div>
               ) : cardDataUrl ? (
                 <div className="relative group max-w-xs rounded-2xl overflow-hidden shadow-2xl border-2 border-pink-500/40 bg-slate-950">
                   <img
                     src={cardDataUrl}
-                    alt={`ผลลัพธ์ ${percentage || '100'}%`}
+                    alt={`Result ${percentage || '100'}%`}
                     className="w-full h-auto object-cover rounded-xl"
                   />
                 </div>
@@ -713,12 +721,12 @@ export const ShareModal: React.FC<Props> = ({
                   onClick={() => generateShareCard()}
                   className="py-3 px-6 rounded-2xl bg-white/10 hover:bg-white/15 text-pink-300 text-sm font-bold border border-pink-400/40 cursor-pointer"
                 >
-                  คลิกเพื่อสร้างการ์ดรูปภาพ ({percentage !== undefined ? `${percentage}%` : ''})
+                  {t.btnReloadCard} ({percentage !== undefined ? `${percentage}%` : ''})
                 </button>
               )}
 
               <div className="text-xs text-slate-400 max-w-sm leading-relaxed">
-                บันทึกภาพขนาด 9:16 โพสต์ลง Instagram Story, Facebook Story หรือส่งเข้าแชทเพื่อนได้ทันที
+                {t.storyCardDesc}
               </div>
 
               <button
@@ -727,7 +735,9 @@ export const ShareModal: React.FC<Props> = ({
                 className="w-full sm:w-auto py-3.5 px-8 rounded-2xl bg-gradient-to-r from-pink-500 via-rose-500 to-purple-600 hover:opacity-95 text-white font-black text-sm sm:text-base flex items-center justify-center gap-2.5 shadow-xl shadow-pink-500/30 transition cursor-pointer active:scale-95 disabled:opacity-50"
               >
                 <Download className="w-5 h-5 text-yellow-300" />
-                <span>บันทึกการ์ดลงเครื่อง (Save Image {percentage !== undefined ? `${percentage}%` : ''})</span>
+                <span>
+                  {t.btnDownloadCard} {percentage !== undefined ? `(${percentage}%)` : ''}
+                </span>
               </button>
             </div>
           )}
@@ -735,7 +745,7 @@ export const ShareModal: React.FC<Props> = ({
 
         {/* Footer info */}
         <div className="p-3.5 bg-slate-950/80 border-t border-white/10 text-center text-[11px] text-slate-400 shrink-0">
-          ✨ เว็บไซต์พร้อมใช้งานและรองรับทุกแพลตฟอร์ม (Mobile, Desktop, iOS, Android)
+          {t.allPlatformsSupported}
         </div>
       </div>
     </div>

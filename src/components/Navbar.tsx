@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Volume2, VolumeX, RotateCcw, Share2 } from 'lucide-react';
 import { sound } from '../utils/audio';
 import { PWAInstallButton } from './PWAInstallButton';
+import { LanguageSelector } from './LanguageSelector';
+import { useLanguage } from '../i18n/LanguageContext';
 
 interface Props {
   onReset: () => void;
@@ -10,6 +12,7 @@ interface Props {
 }
 
 export const Navbar: React.FC<Props> = ({ onReset, isPlaying, onOpenShare }) => {
+  const { t } = useLanguage();
   const [muted, setMuted] = useState(sound.isMuted);
 
   const toggleSound = () => {
@@ -42,6 +45,9 @@ export const Navbar: React.FC<Props> = ({ onReset, isPlaying, onOpenShare }) => 
 
         {/* Actions */}
         <div className="flex items-center gap-2 sm:gap-2.5">
+          {/* Language Selector Dropdown */}
+          <LanguageSelector />
+
           {/* In-App PWA Install */}
           <PWAInstallButton variant="navbar" />
 
@@ -53,19 +59,20 @@ export const Navbar: React.FC<Props> = ({ onReset, isPlaying, onOpenShare }) => 
                 onOpenShare();
               }}
               className="p-2 sm:px-3 sm:py-1.5 rounded-xl bg-pink-500/15 hover:bg-pink-500/25 text-pink-200 hover:text-white transition-all border border-pink-400/30 text-xs font-semibold flex items-center gap-1.5 cursor-pointer active:scale-95"
-              title="แชร์และส่งต่อแบบทดสอบ"
+              title={t.shareQuiz}
+              aria-label={t.shareQuiz}
             >
               <Share2 className="w-4 h-4 text-pink-400" />
-              <span className="hidden sm:inline">แชร์เว็บ</span>
+              <span className="hidden sm:inline">{t.shareQuiz}</span>
             </button>
           )}
 
           {/* Sound Toggle */}
           <button
             onClick={toggleSound}
-            aria-label={muted ? 'เปิดเสียง' : 'ปิดเสียง'}
-            className="p-2 sm:px-3 sm:py-1.5 rounded-xl bg-white/10 hover:bg-white/15 text-slate-200 hover:text-white transition-all border border-pink-500/30 text-xs font-medium flex items-center gap-1.5 shadow-xs cursor-pointer active:scale-95"
-            title={muted ? 'เปิดเสียงเอฟเฟกต์' : 'ปิดเสียงเอฟเฟกต์'}
+            aria-label={muted ? t.soundOn : t.soundOff}
+            className="p-2 sm:px-2.5 sm:py-1.5 rounded-xl bg-white/10 hover:bg-white/15 text-slate-200 hover:text-white transition-all border border-pink-500/30 text-xs font-medium flex items-center gap-1.5 shadow-xs cursor-pointer active:scale-95"
+            title={muted ? t.soundOn : t.soundOff}
           >
             {muted ? (
               <VolumeX className="w-4 h-4 text-slate-400" />
@@ -73,7 +80,7 @@ export const Navbar: React.FC<Props> = ({ onReset, isPlaying, onOpenShare }) => 
               <Volume2 className="w-4 h-4 text-pink-400" />
             )}
             <span className="hidden md:inline text-xs font-semibold">
-              {muted ? 'เปิดเสียง' : 'เสียงเปิด'}
+              {muted ? t.soundOn : t.soundOff}
             </span>
           </button>
 
@@ -81,9 +88,10 @@ export const Navbar: React.FC<Props> = ({ onReset, isPlaying, onOpenShare }) => 
             <button
               onClick={onReset}
               className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-pink-500/20 to-purple-500/20 hover:from-pink-500/30 hover:to-purple-500/30 text-pink-200 hover:text-white transition-all border border-pink-500/40 text-xs font-bold flex items-center gap-1.5 shadow-xs cursor-pointer active:scale-95"
+              aria-label={t.restartQuiz}
             >
               <RotateCcw className="w-3.5 h-3.5 text-pink-400" />
-              <span className="hidden xs:inline">เริ่มใหม่</span>
+              <span className="hidden xs:inline">{t.restartQuiz}</span>
             </button>
           )}
         </div>
@@ -91,4 +99,3 @@ export const Navbar: React.FC<Props> = ({ onReset, isPlaying, onOpenShare }) => 
     </header>
   );
 };
-

@@ -63,6 +63,23 @@
       }
     }
     </script>
+
+    <!-- GitHub Pages Single Page App Redirect Restoration -->
+    <script>
+      (function(l) {
+        if (l.search && l.search[1] === '/') {
+          var decoded = l.search.slice(1).split('&').map(function(s) {
+            return s.replace(/~and~/g, '&');
+          });
+          var targetPath = decoded[0];
+          var query = decoded.slice(1).length ? '?' + decoded.slice(1).join('&') : '';
+          var cleanUrl = (targetPath.charAt(0) === '/' ? targetPath : '/' + targetPath) + query + l.hash;
+          window.history.replaceState(null, '', cleanUrl);
+        }
+      }(window.location));
+    </script>
+
+    <!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "06758f93c48a45f692eb00b3fc73c68c"}'></script><!-- End Cloudflare Web Analytics -->
   </head>
   <body class="bg-slate-950 text-slate-100 antialiased selection:bg-pink-500 selection:text-white min-h-screen">
     <div id="root"></div>

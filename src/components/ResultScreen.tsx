@@ -1,9 +1,21 @@
 import React, { useEffect, useState } from 'react';
 import confetti from 'canvas-confetti';
 import { motion } from 'motion/react';
-import { RotateCcw, Share2, Sparkles, Check, Trophy, Quote, QrCode, Copy, Download } from 'lucide-react';
+import {
+  RotateCcw,
+  Share2,
+  Sparkles,
+  Check,
+  Trophy,
+  Quote,
+  Copy,
+  Download,
+  AlertTriangle,
+} from 'lucide-react';
 import { QuizResultTier } from '../types';
 import { sound } from '../utils/audio';
+import { useLanguage } from '../i18n/LanguageContext';
+import { ReviewSection } from './ReviewSection';
 
 interface Props {
   percentage: number;
@@ -14,6 +26,11 @@ interface Props {
     tier: QuizResultTier;
     initialTab?: 'social' | 'qr' | 'card';
   }) => void;
+  onOpenReportModal: (commentTarget?: {
+    id: string;
+    comment: string;
+    userName: string;
+  }) => void;
 }
 
 export const ResultScreen: React.FC<Props> = ({
@@ -21,7 +38,9 @@ export const ResultScreen: React.FC<Props> = ({
   tier,
   onRestart,
   onOpenShare,
+  onOpenReportModal,
 }) => {
+  const { t } = useLanguage();
   const [animatedScore, setAnimatedScore] = useState(0);
   const [copied, setCopied] = useState(false);
 
@@ -80,8 +99,11 @@ export const ResultScreen: React.FC<Props> = ({
 
   const handleCopyShare = async () => {
     sound.playSelect();
-    const currentUrl = typeof window !== 'undefined' ? window.location.origin + window.location.pathname : '';
-    const shareText = `🌈 ฉันได้ผลลัพธ์ดีกรีตัวแม่ ${percentage}%: "${tier.title}"\n${tier.quote}\nมาลองวัดเปอร์เซ็นต์ความปังของคุณกัน! 👉 ${currentUrl}`;
+    const currentUrl =
+      typeof window !== 'undefined'
+        ? window.location.origin + window.location.pathname
+        : '';
+    const shareText = `🌈 ${percentage}%: "${tier.title}" (${tier.badge})\n${tier.quote}\n👉 ${currentUrl}`;
     try {
       if (navigator.clipboard) {
         await navigator.clipboard.writeText(shareText);
@@ -116,7 +138,7 @@ export const ResultScreen: React.FC<Props> = ({
           {/* Animated Percentage Display */}
           <div className="relative z-10 my-4 sm:my-6">
             <p className="text-xs uppercase tracking-widest text-pink-300 mb-1 font-bold">
-              สรุปผลดีกรีความตัวแม่ของคุณ
+              {t.resultScoreLabel}
             </p>
             <div className="flex items-baseline justify-center">
               <span className="text-6xl sm:text-8xl font-black rainbow-text font-display tabular-nums filter drop-shadow-[0_4px_12px_rgba(236,72,153,0.3)]">
@@ -168,7 +190,8 @@ export const ResultScreen: React.FC<Props> = ({
           <div className="relative z-10 mt-4 p-4 rounded-2xl bg-gradient-to-r from-purple-950/60 to-pink-950/60 border border-purple-400/30 text-xs sm:text-sm text-purple-200 text-left flex items-start gap-3 shadow-md">
             <Sparkles className="w-5 h-5 text-yellow-300 shrink-0 mt-0.5" />
             <p>
-              <strong className="text-white font-bold">คำแนะนำประจำตัว:</strong> {tier.advice}
+              <strong className="text-white font-bold">{t.resultAdviceTitle}:</strong>{' '}
+              {tier.advice}
             </p>
           </div>
         </div>
@@ -176,7 +199,7 @@ export const ResultScreen: React.FC<Props> = ({
         {/* Action Buttons */}
         <div className="space-y-3">
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-            {onOpenShare ? (
+            {onOpenShare && (
               <>
                 <button
                   onClick={() => {
@@ -186,7 +209,7 @@ export const ResultScreen: React.FC<Props> = ({
                   className="flex-1 py-4 px-6 rounded-2xl bg-gradient-to-r from-pink-500 via-rose-500 to-purple-600 hover:opacity-95 text-white font-black text-sm sm:text-base flex items-center justify-center gap-2.5 shadow-xl shadow-pink-500/30 transition-all cursor-pointer active:scale-95 animate-rainbow"
                 >
                   <Download className="w-5 h-5 text-yellow-300" />
-                  <span>บันทึกการ์ดรูปภาพ (Story Card) 🌈</span>
+                  <span>{t.btnSaveStoryCard}</span>
                 </button>
 
                 <button
@@ -195,36 +218,28 @@ export const ResultScreen: React.FC<Props> = ({
                     onOpenShare({ percentage, tier, initialTab: 'social' });
                   }}
                   className="py-4 px-5 rounded-2xl bg-white/10 hover:bg-white/15 border border-pink-400/30 text-slate-100 hover:text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all cursor-pointer active:scale-95 shrink-0"
-                  title="แชร์ไปยังโซเชียล & QR Code"
+                  title={t.btnShareSocial}
                 >
                   <Share2 className="w-4 h-4 text-pink-400" />
-                  <span>แชร์โซเชียล</span>
+                  <span>{t.tabSocial}</span>
                 </button>
               </>
-            ) : (
-              <button
-                onClick={handleCopyShare}
-                className="flex-1 py-4 px-6 rounded-2xl bg-gradient-to-r from-pink-500 via-rose-500 to-purple-600 hover:opacity-95 text-white font-black text-sm sm:text-base flex items-center justify-center gap-2.5 shadow-xl shadow-pink-500/30 transition-all cursor-pointer active:scale-95 animate-rainbow"
-              >
-                {copied ? <Check className="w-5 h-5" /> : <Share2 className="w-5 h-5" />}
-                <span>{copied ? 'คัดลอกผลลัพธ์แล้ว! ส่งให้เพื่อนเลย 💖' : 'แชร์ผลลัพธ์ให้เพื่อนดู 🌈'}</span>
-              </button>
             )}
 
             <button
               onClick={handleCopyShare}
               className="py-4 px-5 rounded-2xl bg-white/10 hover:bg-white/15 border border-pink-400/30 text-slate-100 hover:text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all cursor-pointer active:scale-95 shrink-0"
-              title="คัดลอกข้อความสรุปผล"
+              title={t.btnCopySummary}
             >
               {copied ? (
                 <>
                   <Check className="w-4 h-4 text-emerald-400" />
-                  <span className="text-emerald-300">คัดลอกแล้ว!</span>
+                  <span className="text-emerald-300">{t.copied}</span>
                 </>
               ) : (
                 <>
                   <Copy className="w-4 h-4 text-pink-400" />
-                  <span>คัดลอกข้อความ</span>
+                  <span>{t.btnCopySummary}</span>
                 </>
               )}
             </button>
@@ -237,19 +252,34 @@ export const ResultScreen: React.FC<Props> = ({
               className="py-4 px-6 rounded-2xl bg-white/10 hover:bg-white/15 border border-pink-400/30 text-slate-100 hover:text-white font-bold text-sm sm:text-base flex items-center justify-center gap-2 transition-all cursor-pointer active:scale-95 shrink-0"
             >
               <RotateCcw className="w-4 h-4 text-pink-400" />
-              <span>เล่นใหม่อีกครั้ง</span>
+              <span>{t.btnPlayAgain}</span>
             </button>
           </div>
         </div>
 
         {/* Reassuring Friendly Disclaimer Reminder */}
-        <div className="text-center text-xs text-slate-400 max-w-md mx-auto pt-2">
-          <p>
-            💖 ควิซนี้ทำขึ้นเพื่อความบันเทิงและรอยยิ้มระหว่างเพื่อนฝูงเท่านั้น ทุกคนมีความน่ารักและเป็นตัวเองในแบบที่ดีที่สุด! 🏳️‍🌈✨
-          </p>
+        <div className="text-center text-xs text-slate-400 max-w-md mx-auto pt-1">
+          <p>{t.resultDisclaimer}</p>
+        </div>
+
+        {/* Review Section */}
+        <ReviewSection
+          percentage={percentage}
+          tierBadge={tier.badge}
+          onOpenReportModal={onOpenReportModal}
+        />
+
+        {/* Report / Feedback Button on Result Screen */}
+        <div className="text-center pt-2">
+          <button
+            onClick={() => onOpenReportModal()}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs text-slate-400 hover:text-pink-300 transition cursor-pointer"
+          >
+            <AlertTriangle className="w-3.5 h-3.5" />
+            <span>{t.btnOpenFeedback}</span>
+          </button>
         </div>
       </motion.div>
     </div>
   );
 };
-
