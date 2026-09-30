@@ -72,7 +72,7 @@ export const QuestionScreen: React.FC<Props> = ({
   };
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-4 sm:py-8">
+    <div className="max-w-6xl mx-auto px-4 py-3 sm:py-4">
       {/* Top Progress & Stepper */}
       <div className="mb-4 sm:mb-6">
         <div className="flex items-center justify-between text-xs text-slate-300 mb-2">
@@ -105,23 +105,28 @@ export const QuestionScreen: React.FC<Props> = ({
           animate={{ opacity: 1, x: 0 }}
           exit={{ opacity: 0, x: -20 }}
           transition={{ duration: 0.25 }}
-          className="space-y-4 sm:space-y-6"
+          className="space-y-3 sm:space-y-4"
         >
-          {/* Question Title Card */}
-          <div className="space-y-2 p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-purple-900/30 via-pink-900/25 to-indigo-900/30 border border-pink-500/30 backdrop-blur-md shadow-lg">
-            <h2 className="text-xl sm:text-2xl font-black text-white leading-snug text-balance">
-              {question.title}
-            </h2>
-            <p className="text-xs sm:text-sm text-pink-200/90 flex items-center gap-1.5 font-medium">
-              <span className="text-yellow-300">💡</span> {question.hint}
-            </p>
-          </div>
+          <div className="grid gap-3 md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] md:items-start">
+            <div className="space-y-3">
+              {/* Question Title Card */}
+              <div className="space-y-1 p-2.5 sm:p-4 rounded-2xl bg-gradient-to-r from-purple-900/30 via-pink-900/25 to-indigo-900/30 border border-pink-500/30 backdrop-blur-md shadow-lg">
+                <h2 className="text-lg sm:text-xl font-black text-white leading-snug text-balance line-clamp-1 sm:line-clamp-none">
+                  {question.title}
+                </h2>
+                <p className="hidden sm:flex text-xs sm:text-sm text-pink-200/90 items-center gap-1.5 font-medium">
+                  <span className="text-yellow-300">💡</span> {question.hint}
+                </p>
+              </div>
 
-          {/* Question-Specific Relevant Image */}
-          <QuestionIllustration question={question} />
+              {/* Keep the visual as context without pushing answers below the fold. */}
+              <div className="rounded-2xl md:overflow-visible">
+                <QuestionIllustration question={question} />
+              </div>
+            </div>
 
-          {/* Options Grid (4 Choices - STRICTLY NO SCORES DISPLAYED!) */}
-          <div className="space-y-2.5 sm:space-y-3 pt-1">
+            {/* Options Grid (4 Choices - STRICTLY NO SCORES DISPLAYED!) */}
+            <div className="space-y-2 pt-0 md:pt-1">
             {question.options.map((option) => {
               const isSelected = selectedOptionId === option.id;
               const style = optionColors[option.id];
@@ -130,23 +135,23 @@ export const QuestionScreen: React.FC<Props> = ({
                 <button
                   key={option.id}
                   onClick={() => handleOptionClick(option)}
-                  className={`w-full text-left p-3.5 sm:p-4 rounded-2xl transition-all duration-200 border-2 cursor-pointer flex items-center justify-between gap-3 group relative overflow-hidden shadow-md active:scale-99 ${
+                  className={`w-full text-left p-3 sm:p-3.5 rounded-2xl transition-all duration-200 border-2 cursor-pointer flex items-center justify-between gap-3 group relative overflow-hidden shadow-md active:scale-99 ${
                     isSelected
                       ? `${style.selected} shadow-lg ring-2 ring-pink-400/50`
                       : `bg-slate-900/70 hover:bg-slate-800/80 border-white/10 ${style.border} text-slate-100`
                   }`}
                   aria-pressed={isSelected}
                 >
-                  <div className="flex items-center gap-3.5 flex-1 min-w-0">
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
                     {/* Letter badge: a, b, c, d */}
                     <div
-                      className={`w-9 h-9 rounded-xl flex items-center justify-center font-black text-sm uppercase shrink-0 transition-transform group-hover:scale-105 shadow-md ${style.badge}`}
+                      className={`w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center font-black text-sm uppercase shrink-0 transition-transform group-hover:scale-105 shadow-md ${style.badge}`}
                     >
                       {option.id}
                     </div>
 
                     {/* Option Text strictly without any scores */}
-                    <span className="text-sm sm:text-base leading-relaxed break-words font-semibold text-slate-100">
+                    <span className="text-sm sm:text-base leading-snug break-words font-semibold text-slate-100">
                       {option.text}
                     </span>
                   </div>
@@ -162,10 +167,11 @@ export const QuestionScreen: React.FC<Props> = ({
                 </button>
               );
             })}
+            </div>
           </div>
 
           {/* Bottom Navigation */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 sm:pt-6 border-t border-pink-500/20">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-2 pt-2 sm:pt-3 -mt-2 sm:-mt-3 border-t border-pink-500/20">
             <div className="flex items-center justify-between w-full sm:w-auto gap-2">
               <button
                 onClick={handlePrevClick}
