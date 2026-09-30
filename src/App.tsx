@@ -306,7 +306,7 @@ export default function App() {
       />
 
       {/* Main Content View */}
-      <main className={`flex-1 flex flex-col relative z-10 ${step === 'QUIZ' ? 'justify-start' : 'justify-center'}`}>
+      <main className="flex-1 flex flex-col justify-center relative z-10">
         {step === 'INTRO' && (
           <IntroScreen
             onStart={handleStart}

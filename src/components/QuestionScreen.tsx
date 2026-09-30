@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ArrowLeft, ArrowRight, CheckCircle2, Sparkles, RotateCcw, Save } from 'lucide-react';
 import { Question, Option } from '../types';
@@ -28,6 +28,14 @@ export const QuestionScreen: React.FC<Props> = ({
   onReset,
 }) => {
   const { t } = useLanguage();
+  const questionRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => {
+      questionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [question.id]);
   const isFirst = currentIndex === 0;
   const isLast = currentIndex === totalQuestions - 1;
   const progressPercent = Math.round(((currentIndex + 1) / totalQuestions) * 100);
@@ -72,7 +80,7 @@ export const QuestionScreen: React.FC<Props> = ({
   };
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-3 sm:py-4">
+    <div className="max-w-6xl mx-auto px-4 py-3 sm:py-4 min-h-[calc(100svh-8rem)] flex flex-col justify-center">
       {/* Top Progress & Stepper */}
       <div className="mb-4 sm:mb-6">
         <div className="flex items-center justify-between text-xs text-slate-300 mb-2">
@@ -99,6 +107,7 @@ export const QuestionScreen: React.FC<Props> = ({
       </div>
 
       <AnimatePresence mode="wait">
+        <div ref={questionRef}>
         <motion.div
           key={question.id}
           initial={{ opacity: 0, x: 20 }}
@@ -220,6 +229,7 @@ export const QuestionScreen: React.FC<Props> = ({
             </div>
           </div>
         </motion.div>
+        </div>
       </AnimatePresence>
     </div>
   );
