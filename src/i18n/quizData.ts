@@ -1,20 +1,20 @@
 import { Question, QuizResultTier } from '../types';
 import { SupportedLang } from './types';
 
-import imgTiktokDance from '../assets/images/quiz_tiktok_dance_1790436314817.jpg';
-import imgCatCafe from '../assets/images/quiz_cat_cafe_1790436328359.jpg';
-import imgBlBackhug from '../assets/images/quiz_bl_backhug_1790436339591.jpg';
-import imgBangkokPride from '../assets/images/quiz_bangkok_pride_1790436349886.jpg';
-import imgIgFlatlay from '../assets/images/quiz_ig_flatlay_1790436360268.jpg';
-import imgDistractedBoyfriend from '../assets/images/quiz_distracted_boyfriend.jpg';
-import imgBlHearthands from '../assets/images/quiz_bl_hearthands_1790436371061.jpg';
-import imgThaiIcon from '../assets/images/quiz_thai_icon_1790436382078.jpg';
-import imgPageantQueen from '../assets/images/quiz_pageant_queen_1790434242170.jpg';
-import imgBtsGroup from '../assets/images/quiz_bts_group_1790436394487.jpg';
-import imgPrideMeme from '../assets/images/quiz_pride_meme_1790436405083.jpg';
-import imgTarotFortune from '../assets/images/quiz_tarot_fortune_1790434253591.jpg';
-import imgKpopWonyoung from '../assets/images/quiz_kpop_wonyoung_1790436416525.jpg';
-import imgWellImGay from '../assets/images/quiz_well_im_gay.gif';
+import imgTiktokDance from '../assets/images/quiz_tiktok_dance_1790436314817.webp';
+import imgCatCafe from '../assets/images/quiz_cat_cafe_1790436328359.webp';
+import imgBlBackhug from '../assets/images/quiz_bl_backhug_1790436339591.webp';
+import imgBangkokPride from '../assets/images/quiz_bangkok_pride_1790436349886.webp';
+import imgIgFlatlay from '../assets/images/quiz_ig_flatlay_1790436360268.webp';
+import imgDistractedBoyfriend from '../assets/images/quiz_distracted_boyfriend.webp';
+import imgBlHearthands from '../assets/images/quiz_bl_hearthands_1790436371061.webp';
+import imgThaiIcon from '../assets/images/quiz_thai_icon_1790436382078.webp';
+import imgPageantQueen from '../assets/images/quiz_pageant_queen_1790434242170.webp';
+import imgBtsGroup from '../assets/images/quiz_bts_group_1790436394487.webp';
+import imgPrideMeme from '../assets/images/quiz_pride_meme_1790436405083.webp';
+import imgTarotFortune from '../assets/images/quiz_tarot_fortune_1790434253591.webp';
+import imgKpopWonyoung from '../assets/images/quiz_kpop_wonyoung_1790436416525.webp';
+import imgWellImGay from '../assets/images/quiz_well_im_gay.webp';
 
 const questionImages = [
   imgTiktokDance,

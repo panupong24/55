@@ -71,7 +71,7 @@ export const Navbar: React.FC<Props> = ({ onReset, isPlaying, onOpenShare }) => 
           <button
             onClick={toggleSound}
             aria-label={muted ? t.soundOn : t.soundOff}
-            className="p-2 sm:px-2.5 sm:py-1.5 rounded-xl bg-white/10 hover:bg-white/15 text-slate-200 hover:text-white transition-all border border-pink-500/30 text-xs font-medium flex items-center gap-1.5 shadow-xs cursor-pointer active:scale-95"
+            className="p-2 min-h-10 min-w-10 justify-center sm:px-2.5 sm:py-1.5 rounded-xl bg-white/10 hover:bg-white/15 text-slate-200 hover:text-white transition-all border border-pink-500/30 text-xs font-medium flex items-center gap-1.5 shadow-xs cursor-pointer active:scale-95"
             title={muted ? t.soundOn : t.soundOff}
           >
             {muted ? (

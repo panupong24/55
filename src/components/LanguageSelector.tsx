@@ -48,7 +48,7 @@ export const LanguageSelector: React.FC = () => {
           sound.playSelect();
           setIsOpen(!isOpen);
         }}
-        className="flex items-center gap-1.5 py-1.5 px-2.5 sm:px-3 rounded-full bg-white/10 hover:bg-white/15 border border-pink-400/30 text-white text-xs sm:text-sm font-semibold transition cursor-pointer active:scale-95 shadow-sm"
+        className="flex items-center justify-center gap-1.5 min-h-10 min-w-10 py-1.5 px-2.5 sm:px-3 rounded-full bg-white/10 hover:bg-white/15 border border-pink-400/30 text-white text-xs sm:text-sm font-semibold transition cursor-pointer active:scale-95 shadow-sm"
         aria-label={t.switchLanguage}
         aria-expanded={isOpen}
         aria-haspopup="true"

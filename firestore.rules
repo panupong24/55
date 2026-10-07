@@ -7,40 +7,66 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    // Owner account: the email must be VERIFIED, otherwise anyone could
+    // register this address with Email/Password and become admin.
+    function isVerifiedOwner() {
+      return isAuthenticated() &&
+        request.auth.token.email != null &&
+        request.auth.token.email_verified == true &&
+        request.auth.token.email.lower() == '684234020@parichat.skru.ac.th';
+    }
+
     function isAdmin() {
       return isAuthenticated() && (
-        exists(/databases/$(database)/documents/admins/$(request.auth.uid)) ||
-        (request.auth.token.email != null && request.auth.token.email.lower() == '684234020@parichat.skru.ac.th')
+        isVerifiedOwner() ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
       );
+    }
+
+    function isOptionalNumber(v) {
+      return v == null || v is number;
+    }
+
+    function isOptionalShortString(v, max) {
+      return v == null || (v is string && v.size() <= max);
     }
 
     // Admins registry
     match /admins/{uid} {
       allow read: if isAuthenticated() && (request.auth.uid == uid || isAdmin());
-      allow write: if isAuthenticated() && (
-        (request.auth.uid == uid && request.auth.token.email != null && request.auth.token.email.lower() == '684234020@parichat.skru.ac.th') ||
-        isAdmin()
-      );
+      allow write: if (request.auth != null && request.auth.uid == uid && isVerifiedOwner()) || isAdmin();
     }
 
     // Community reviews
     match /reviews/{reviewId} {
-      // Public can read visible reviews; admin can read all including hidden
-      allow read: if resource == null || resource.data.hidden != true || isAdmin();
-      
-      // Anyone can submit a review with valid fields
-      allow create: if request.resource.data.rating is number &&
+      // Public can read visible reviews; admin can read all including hidden.
+      // Public list queries MUST filter where('hidden', '==', false).
+      allow read: if resource.data.hidden == false || isAdmin();
+
+      // Anyone can submit a review, but only with the expected fields and
+      // it must start visible and un-reported.
+      allow create: if request.resource.data.keys().hasOnly([
+                        'rating', 'comment', 'userName', 'percentage',
+                        'tierBadge', 'createdAt', 'reported', 'hidden'
+                      ]) &&
+                      request.resource.data.rating is number &&
                       request.resource.data.rating >= 1 &&
                       request.resource.data.rating <= 5 &&
                       request.resource.data.comment is string &&
                       request.resource.data.comment.size() > 0 &&
                       request.resource.data.comment.size() <= 280 &&
                       request.resource.data.userName is string &&
-                      request.resource.data.createdAt is number;
+                      request.resource.data.userName.size() > 0 &&
+                      request.resource.data.userName.size() <= 40 &&
+                      isOptionalNumber(request.resource.data.get('percentage', null)) &&
+                      isOptionalShortString(request.resource.data.get('tierBadge', null), 120) &&
+                      request.resource.data.createdAt is number &&
+                      request.resource.data.reported == false &&
+                      request.resource.data.hidden == false;
 
       // Anyone can flag as reported, or Admin can update status/hidden
-      allow update: if (isAdmin()) || 
-                      (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['reported']) && 
+      allow update: if isAdmin() ||
+                      (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['reported']) &&
                        request.resource.data.reported == true);
 
       // Only admins can delete reviews
@@ -52,12 +78,19 @@ service cloud.firestore {
       // Only authenticated admins can view reports
       allow read: if isAdmin();
 
-      // Anyone can create a report with valid category and details
-      allow create: if request.resource.data.category in ['bug', 'translation', 'inappropriate_comment', 'suggestion'] &&
+      // Anyone can create a report with the expected fields only
+      allow create: if request.resource.data.keys().hasOnly([
+                        'category', 'details', 'targetCommentId',
+                        'targetCommentSnippet', 'status', 'createdAt', 'lang'
+                      ]) &&
+                      request.resource.data.category in ['bug', 'translation', 'inappropriate_comment', 'suggestion'] &&
                       request.resource.data.details is string &&
                       request.resource.data.details.size() > 0 &&
                       request.resource.data.details.size() <= 500 &&
-                      request.resource.data.status in ['new', 'investigating', 'resolved'] &&
+                      isOptionalShortString(request.resource.data.get('targetCommentId', null), 100) &&
+                      isOptionalShortString(request.resource.data.get('targetCommentSnippet', null), 100) &&
+                      isOptionalShortString(request.resource.data.get('lang', null), 10) &&
+                      request.resource.data.status == 'new' &&
                       request.resource.data.createdAt is number;
 
       // Only admins can update status or delete reports

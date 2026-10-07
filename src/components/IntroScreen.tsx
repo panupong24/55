@@ -14,7 +14,7 @@ import { motion } from 'motion/react';
 import { sound } from '../utils/audio';
 import { PWAInstallButton } from './PWAInstallButton';
 import { useLanguage } from '../i18n/LanguageContext';
-import heroImage from '../assets/images/hero_rainbow_quiz_1790434208133.jpg';
+import heroImage from '../assets/images/hero_rainbow_quiz_1790434208133.webp';
 
 interface Props {
   onStart: () => void;

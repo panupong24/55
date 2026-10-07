@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, lazy, Suspense } from 'react';
 import { Option } from './types';
 import { Navbar } from './components/Navbar';
 import { IntroScreen } from './components/IntroScreen';
@@ -8,10 +8,14 @@ import { ShareModal } from './components/ShareModal';
 import { OfflineIndicator } from './components/OfflineIndicator';
 import { ResetConfirmModal } from './components/ResetConfirmModal';
 import { ReportModal } from './components/ReportModal';
-import { AdminPage } from './pages/AdminPage';
 import { quizStorage, QuizProgress } from './utils/quizStorage';
 import { useLanguage } from './i18n/LanguageContext';
 import { AlertTriangle } from 'lucide-react';
+
+// Admin panel is only needed on /admin, so keep it out of the main bundle
+const AdminPage = lazy(() =>
+  import('./pages/AdminPage').then((m) => ({ default: m.AdminPage })),
+);
 
 type AppStep = 'INTRO' | 'QUIZ' | 'RESULT';
 
@@ -281,7 +285,11 @@ export default function App() {
 
   // Route /admin renders the dedicated full-page AdminPage
   if (currentPath.toLowerCase().startsWith('/admin')) {
-    return <AdminPage onNavigateHome={() => navigate('/')} />;
+    return (
+      <Suspense fallback={<div className="min-h-screen bg-slate-950" />}>
+        <AdminPage onNavigateHome={() => navigate('/')} />
+      </Suspense>
+    );
   }
 
   // Main Public Quiz View (Zero Admin buttons, triggers, or modals)

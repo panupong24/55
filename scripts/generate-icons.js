@@ -121,11 +121,14 @@ async function run() {
     .toFile(path.join(publicDir, 'apple-touch-icon.png'));
   console.log('Saved public/apple-touch-icon.png');
 
-  // Copy hero image to public/og-image.jpg
-  const heroSrc = path.resolve('src/assets/images/hero_rainbow_quiz_1790434208133.jpg');
+  // Social share image: exactly 1200x630 JPEG (matches og:image:width/height)
+  const heroSrc = path.resolve('src/assets/images/hero_rainbow_quiz_1790434208133.webp');
   if (fs.existsSync(heroSrc)) {
-    fs.copyFileSync(heroSrc, path.join(publicDir, 'og-image.jpg'));
-    console.log('Copied hero image to public/og-image.jpg');
+    await sharp(heroSrc)
+      .resize(1200, 630, { fit: 'cover' })
+      .jpeg({ quality: 82, progressive: true })
+      .toFile(path.join(publicDir, 'og-image.jpg'));
+    console.log('Saved public/og-image.jpg (1200x630)');
   }
 
   console.log('All public assets successfully created!');
