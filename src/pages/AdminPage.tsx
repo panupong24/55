@@ -24,18 +24,17 @@ import {
 } from 'lucide-react';
 import {
   signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
+  sendEmailVerification,
+  sendPasswordResetEmail,
   signOut,
   onAuthStateChanged,
   User,
 } from 'firebase/auth';
-import {
-  auth,
-  checkEmailPasswordStatus,
-  getFirebaseConsoleLinks,
-} from '../services/firebase';
+import { getFirebaseConsoleLinks } from '../services/firebase';
+import { auth } from '../services/auth';
 import {
   feedbackService,
+  OWNER_ADMIN_EMAIL,
   ReportIssue,
   Review,
 } from '../services/feedbackService';
@@ -46,7 +45,7 @@ interface Props {
 }
 
 /**
- * Masks email address for privacy and security (e.g. "684234020@parichat.skru.ac.th" -> "68***@parichat.skru.ac.th")
+ * Masks email address for privacy and security (e.g. "name@example.com" -> "na***@example.com")
  */
 function maskEmail(rawEmail?: string | null): string {
   if (!rawEmail) return 'Admin';
@@ -62,14 +61,15 @@ export const AdminPage: React.FC<Props> = ({ onNavigateHome }) => {
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState<boolean>(true);
 
-  // Provider health check state
-  const [isCheckingProvider, setIsCheckingProvider] = useState<boolean>(false);
+  // Provider status: only set from a real sign-in error (no sign-up probing)
   const [isEmailPasswordEnabled, setIsEmailPasswordEnabled] = useState<boolean | null>(null);
   const [showSetupGuide, setShowSetupGuide] = useState<boolean>(false);
 
-  // Auth Form State (strictly empty by default - no hardcoded/prefilled values)
-  const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
+  // Auth Form State (sign-in only: admin accounts are never self-registered here)
   const [email, setEmail] = useState('');
+  const [authNotice, setAuthNotice] = useState('');
+  const [verifyNotice, setVerifyNotice] = useState('');
+  const [isSendingVerify, setIsSendingVerify] = useState(false);
   const [password, setPassword] = useState('');
   const [authError, setAuthError] = useState('');
   const [authErrorCode, setAuthErrorCode] = useState('');
@@ -85,17 +85,6 @@ export const AdminPage: React.FC<Props> = ({ onNavigateHome }) => {
   const [deleteReviewError, setDeleteReviewError] = useState('');
 
   const consoleLinks = getFirebaseConsoleLinks();
-
-  // Check Email/Password provider status
-  const checkProviderStatus = async () => {
-    setIsCheckingProvider(true);
-    const res = await checkEmailPasswordStatus();
-    setIsEmailPasswordEnabled(res.isEnabled);
-    setIsCheckingProvider(false);
-    if (!res.isEnabled) {
-      setShowSetupGuide(true);
-    }
-  };
 
   // Listen to Firebase Auth state
   useEffect(() => {
@@ -116,7 +105,6 @@ export const AdminPage: React.FC<Props> = ({ onNavigateHome }) => {
   }, []);
 
   useEffect(() => {
-    checkProviderStatus();
     if (isAdmin) {
       loadData();
     }
@@ -149,13 +137,13 @@ export const AdminPage: React.FC<Props> = ({ onNavigateHome }) => {
         return {
           code,
           message:
-            'อีเมลหรือรหัสผ่านไม่ถูกต้อง (หากยังไม่มีบัญชีผู้ดูแล กรุณากดเลือก "สร้างบัญชีผู้ดูแลใหม่")',
+            'อีเมลหรือรหัสผ่านไม่ถูกต้อง (หากยังไม่มีบัญชีผู้ดูแล ให้สร้างผู้ใช้ใน Firebase Console → Authentication → Users)',
         };
       case 'auth/user-not-found':
         return {
           code,
           message:
-            'ไม่พบบัญชีนี้ในระบบ Firebase กรุณากดเลือก "สร้างบัญชีผู้ดูแลใหม่ (Register)" ก่อนเข้าสู่ระบบ',
+            'ไม่พบบัญชีนี้ในระบบ Firebase กรุณาสร้างผู้ใช้ใน Firebase Console → Authentication → Users ก่อน',
         };
       case 'auth/wrong-password':
         return {
@@ -205,24 +193,15 @@ export const AdminPage: React.FC<Props> = ({ onNavigateHome }) => {
     setAuthErrorCode('');
     setIsSubmitting(true);
 
+    setAuthNotice('');
     try {
-      if (authMode === 'signin') {
-        const cred = await signInWithEmailAndPassword(
-          auth,
-          email.trim(),
-          password,
-        );
-        const adminCheck = await feedbackService.checkIsAdmin(cred.user);
-        setIsAdmin(adminCheck);
-      } else {
-        const cred = await createUserWithEmailAndPassword(
-          auth,
-          email.trim(),
-          password,
-        );
-        const adminCheck = await feedbackService.checkIsAdmin(cred.user);
-        setIsAdmin(adminCheck);
-      }
+      const cred = await signInWithEmailAndPassword(
+        auth,
+        email.trim(),
+        password,
+      );
+      const adminCheck = await feedbackService.checkIsAdmin(cred.user);
+      setIsAdmin(adminCheck);
       sound.playVictory();
     } catch (err: any) {
       console.warn('Firebase Auth error details:', err.code, err.message);
@@ -231,6 +210,56 @@ export const AdminPage: React.FC<Props> = ({ onNavigateHome }) => {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handlePasswordReset = async () => {
+    setAuthError('');
+    setAuthErrorCode('');
+    setAuthNotice('');
+    if (!email.trim()) {
+      setAuthError('กรอกอีเมลก่อน แล้วกด "ลืมรหัสผ่าน" อีกครั้ง');
+      return;
+    }
+    try {
+      await sendPasswordResetEmail(auth, email.trim());
+      setAuthNotice('ถ้าอีเมลนี้มีบัญชีอยู่ ระบบได้ส่งลิงก์ตั้งรหัสผ่านใหม่ไปแล้ว กรุณาเช็กกล่องอีเมล');
+    } catch (err: any) {
+      const mapped = mapFirebaseError(err);
+      setAuthError(mapped.message);
+    }
+  };
+
+  const isUnverifiedOwner =
+    !!currentUser &&
+    !currentUser.emailVerified &&
+    currentUser.email?.toLowerCase() === OWNER_ADMIN_EMAIL.toLowerCase();
+
+  const handleSendVerification = async () => {
+    if (!currentUser) return;
+    setIsSendingVerify(true);
+    setVerifyNotice('');
+    try {
+      await sendEmailVerification(currentUser);
+      setVerifyNotice('ส่งอีเมลยืนยันแล้ว กดลิงก์ในอีเมล จากนั้นกลับมากด "ฉันยืนยันแล้ว"');
+    } catch (err: any) {
+      setVerifyNotice(mapFirebaseError(err).message);
+    } finally {
+      setIsSendingVerify(false);
+    }
+  };
+
+  const handleRecheckVerification = async () => {
+    if (!auth.currentUser) return;
+    await auth.currentUser.reload();
+    // Refresh the ID token so Firestore rules see email_verified = true
+    await auth.currentUser.getIdToken(true);
+    const refreshed = auth.currentUser;
+    setCurrentUser(refreshed);
+    if (!refreshed.emailVerified) {
+      setVerifyNotice('ยังไม่พบการยืนยันอีเมล กรุณากดลิงก์ในอีเมลก่อน');
+      return;
+    }
+    setIsAdmin(await feedbackService.checkIsAdmin(refreshed));
   };
 
   const handleSignOut = async () => {
@@ -378,7 +407,7 @@ export const AdminPage: React.FC<Props> = ({ onNavigateHome }) => {
                   <Lock className="w-7 h-7" />
                 </div>
                 <h2 className="text-xl font-black text-white">
-                  {authMode === 'signin' ? 'เข้าสู่ระบบผู้ดูแลระบบ' : 'ลงทะเบียนผู้ดูแลระบบใหม่'}
+                  เข้าสู่ระบบผู้ดูแลระบบ
                 </h2>
                 <p className="text-xs text-slate-400">
                   ยืนยันตัวตนด้วย Firebase Authentication (Email/Password) เพื่อเข้าสู่แผงควบคุม
@@ -412,15 +441,6 @@ export const AdminPage: React.FC<Props> = ({ onNavigateHome }) => {
                     >
                       <HelpCircle className="w-3.5 h-3.5 text-pink-300" />
                       <span>{showSetupGuide ? 'ซ่อนคู่มือ' : 'ดูขั้นตอน'}</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={checkProviderStatus}
-                      disabled={isCheckingProvider}
-                      className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/15 text-slate-300 text-xs transition"
-                      title="ตรวจสอบสถานะใหม่"
-                    >
-                      <RotateCw className={`w-3.5 h-3.5 ${isCheckingProvider ? 'animate-spin' : ''}`} />
                     </button>
                   </div>
                 </div>
@@ -483,10 +503,17 @@ export const AdminPage: React.FC<Props> = ({ onNavigateHome }) => {
                     placeholder="ความยาวอย่างน้อย 6 ตัวอักษร"
                     required
                     minLength={6}
-                    autoComplete={authMode === 'signin' ? 'current-password' : 'new-password'}
+                    autoComplete="current-password"
                     className="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-white/15 text-sm text-white focus:border-purple-500 outline-none transition placeholder:text-slate-500"
                   />
                 </div>
+
+                {authNotice && (
+                  <div className="p-3 rounded-xl bg-emerald-500/15 border border-emerald-500/40 text-emerald-200 text-xs flex items-start gap-2">
+                    <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                    <span>{authNotice}</span>
+                  </div>
+                )}
 
                 {authError && (
                   <div className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/40 text-rose-200 text-xs space-y-1">
@@ -509,11 +536,7 @@ export const AdminPage: React.FC<Props> = ({ onNavigateHome }) => {
                 >
                   <LogIn className="w-4 h-4" />
                   <span>
-                    {isSubmitting
-                      ? 'กำลังตรวจสอบข้อมูล...'
-                      : authMode === 'signin'
-                      ? 'เข้าสู่ระบบ (Sign In)'
-                      : 'สร้างบัญชีผู้ดูแล (Register)'}
+                    {isSubmitting ? 'กำลังตรวจสอบข้อมูล...' : 'เข้าสู่ระบบ (Sign In)'}
                   </span>
                 </button>
               </form>
@@ -522,16 +545,10 @@ export const AdminPage: React.FC<Props> = ({ onNavigateHome }) => {
               <div className="text-center pt-1">
                 <button
                   type="button"
-                  onClick={() => {
-                    setAuthMode(authMode === 'signin' ? 'signup' : 'signin');
-                    setAuthError('');
-                    setAuthErrorCode('');
-                  }}
-                  className="text-xs text-purple-300 hover:text-purple-200 underline cursor-pointer"
+                  onClick={handlePasswordReset}
+                  className="text-xs text-purple-300 hover:text-purple-200 underline cursor-pointer py-2"
                 >
-                  {authMode === 'signin'
-                    ? 'ยังไม่มีบัญชีผู้ดูแล? สร้างบัญชีใหม่ (Register)'
-                    : 'มีบัญชีอยู่แล้ว? เข้าสู่ระบบ (Sign In)'}
+                  ลืมรหัสผ่าน? ส่งลิงก์ตั้งรหัสผ่านใหม่ทางอีเมล
                 </button>
               </div>
 
@@ -563,9 +580,35 @@ export const AdminPage: React.FC<Props> = ({ onNavigateHome }) => {
               </p>
             </div>
 
-            <div className="p-4 rounded-2xl bg-slate-900 border border-white/10 text-xs text-slate-400 text-center">
-              กรุณาติดต่อผู้ดูแลระบบหลักเพื่อขอรับสิทธิ์ Role: Admin ในระบบ Firestore
-            </div>
+            {isUnverifiedOwner ? (
+              <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-400/40 text-xs text-slate-200 text-center space-y-3">
+                <p>
+                  บัญชีเจ้าของระบบต้อง <strong className="text-amber-300">ยืนยันอีเมล</strong> ก่อนจึงจะได้สิทธิ์ผู้ดูแล
+                  (ป้องกันไม่ให้คนอื่นสมัครด้วยอีเมลนี้แล้วเข้าแผงควบคุมได้)
+                </p>
+                <div className="flex flex-wrap items-center justify-center gap-2">
+                  <button
+                    onClick={handleSendVerification}
+                    disabled={isSendingVerify}
+                    className="py-2 px-4 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs transition cursor-pointer disabled:opacity-50"
+                  >
+                    {isSendingVerify ? 'กำลังส่ง...' : 'ส่งอีเมลยืนยัน'}
+                  </button>
+                  <button
+                    onClick={handleRecheckVerification}
+                    className="py-2 px-4 rounded-xl bg-white/10 hover:bg-white/15 text-slate-200 font-bold text-xs transition cursor-pointer inline-flex items-center gap-1.5"
+                  >
+                    <RotateCw className="w-3.5 h-3.5" />
+                    ฉันยืนยันแล้ว
+                  </button>
+                </div>
+                {verifyNotice && <p className="text-amber-200">{verifyNotice}</p>}
+              </div>
+            ) : (
+              <div className="p-4 rounded-2xl bg-slate-900 border border-white/10 text-xs text-slate-400 text-center">
+                กรุณาติดต่อผู้ดูแลระบบหลักเพื่อขอรับสิทธิ์ Role: Admin ในระบบ Firestore
+              </div>
+            )}
 
             <div className="flex items-center justify-center gap-3">
               <button

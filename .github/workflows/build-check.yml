@@ -1,0 +1,34 @@
+name: Build check
+
+# Builds every pull request (without deploying) so problems show up before merge.
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build project
+        run: npm run build
+
+      - name: Report precache size
+        run: |
+          echo "Service worker precache entries:"
+          grep -o 'url:"[^"]*"' dist/sw.js | wc -l
+          du -sh dist

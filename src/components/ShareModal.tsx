@@ -449,7 +449,7 @@ export const ShareModal: React.FC<Props> = ({
     const url = `https://social-plugins.line.me/lineit/share?url=${encodeURIComponent(
       currentUrl,
     )}`;
-    window.open(url, '_blank', 'width=600,height=600');
+    window.open(url, '_blank', 'width=600,height=600,noopener,noreferrer');
   };
 
   const handleFacebookShare = () => {
@@ -457,7 +457,7 @@ export const ShareModal: React.FC<Props> = ({
     const url = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(
       currentUrl,
     )}`;
-    window.open(url, '_blank', 'width=600,height=600');
+    window.open(url, '_blank', 'width=600,height=600,noopener,noreferrer');
   };
 
   const handleTwitterShare = () => {
@@ -466,7 +466,7 @@ export const ShareModal: React.FC<Props> = ({
     const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(
       text,
     )}&url=${encodeURIComponent(currentUrl)}`;
-    window.open(url, '_blank', 'width=600,height=600');
+    window.open(url, '_blank', 'width=600,height=600,noopener,noreferrer');
   };
 
   const handleDownloadQR = () => {

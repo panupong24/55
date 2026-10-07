@@ -7,11 +7,12 @@ import {
   deleteDoc,
   query,
   orderBy,
+  where,
   onSnapshot,
   getDoc,
 } from 'firebase/firestore';
-import { User } from 'firebase/auth';
-import { db, auth } from './firebase';
+import type { User } from 'firebase/auth';
+import { db } from './firebase';
 
 export interface Review {
   id: string;
@@ -60,8 +61,10 @@ class FeedbackService {
 
     try {
       // Real-time synchronization for reviews
-      const reviewsCol = collection(db, 'reviews');
-      const qReviews = query(reviewsCol, orderBy('createdAt', 'desc'));
+      // Firestore rules only let the public read reviews with hidden == false,
+      // so the query must carry that filter or the whole query is rejected.
+      // (Equality-only query: no composite index needed; sorted client-side.)
+      const qReviews = query(collection(db, 'reviews'), where('hidden', '==', false));
 
       this.firestoreUnsubscribeReviews = onSnapshot(
         qReviews,
@@ -220,7 +223,10 @@ class FeedbackService {
 
   public async fetchReviewsFromFirestore(includeHidden = false): Promise<Review[]> {
     try {
-      const qReviews = query(collection(db, 'reviews'), orderBy('createdAt', 'desc'));
+      // Admins may read everything (including hidden); the public only visible ones.
+      const qReviews = includeHidden
+        ? query(collection(db, 'reviews'), orderBy('createdAt', 'desc'))
+        : query(collection(db, 'reviews'), where('hidden', '==', false));
       const snapshot = await getDocs(qReviews);
       const list: Review[] = [];
       snapshot.forEach((d) => {
@@ -237,10 +243,8 @@ class FeedbackService {
           hidden: !!data.hidden,
         });
       });
-      if (list.length > 0) {
-        this.reviewsCache = list;
-        this.saveReviewsToLocalStorage(list);
-      }
+      this.reviewsCache = list;
+      this.saveReviewsToLocalStorage(list);
     } catch (err) {
       console.warn('Could not fetch reviews from Firestore, using cache:', err);
     }
@@ -292,7 +296,7 @@ class FeedbackService {
 
     const trimmedName = input.userName?.trim();
     const finalUserName =
-      trimmedName && trimmedName.length > 0 ? trimmedName : 'Rainbow Friend';
+      trimmedName && trimmedName.length > 0 ? trimmedName.slice(0, 40) : 'Rainbow Friend';
 
     const reviewId =
       'rev_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7);
@@ -303,7 +307,7 @@ class FeedbackService {
       comment: trimmedComment,
       userName: finalUserName,
       percentage: input.percentage,
-      tierBadge: input.tierBadge,
+      tierBadge: input.tierBadge?.slice(0, 120),
       createdAt: Date.now(),
       reported: false,
       hidden: false,
@@ -442,10 +446,10 @@ class FeedbackService {
         category: newReport.category,
         details: newReport.details,
         targetCommentId: newReport.targetCommentId ?? null,
-        targetCommentSnippet: newReport.targetCommentSnippet ?? null,
+        targetCommentSnippet: newReport.targetCommentSnippet?.slice(0, 100) ?? null,
         status: newReport.status,
         createdAt: newReport.createdAt,
-        lang: newReport.lang ?? null,
+        lang: newReport.lang?.slice(0, 10) ?? null,
       });
     } catch (err) {
       console.warn('Failed to save report to Firestore, saving to local cache:', err);
@@ -558,8 +562,11 @@ class FeedbackService {
     if (!user) return false;
 
     // Check primary project owner email
+    // The owner email only counts once it is VERIFIED (mirrors firestore.rules),
+    // otherwise anyone could register this address and become admin.
     if (
       user.email &&
+      user.emailVerified &&
       user.email.toLowerCase() === OWNER_ADMIN_EMAIL.toLowerCase()
     ) {
       // Ensure the admin doc exists in Firestore for RBAC consistency
