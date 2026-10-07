@@ -8,6 +8,7 @@ on:
 
 permissions:
   contents: read
+  pull-requests: write
 
 jobs:
   build:
@@ -27,8 +28,25 @@ jobs:
       - name: Build project
         run: npm run build
 
-      - name: Report precache size
+      - name: Report bundle sizes on the PR
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          echo "Service worker precache entries:"
-          grep -o 'url:"[^"]*"' dist/sw.js | wc -l
-          du -sh dist
+          {
+            echo "### Build size report"
+            echo ""
+            echo "| file | raw KB | gzip KB |"
+            echo "|---|---:|---:|"
+            for f in $(ls -S dist/assets/*.js dist/assets/*.css); do
+              raw=$(( $(stat -c%s "$f") / 1024 ))
+              gz=$(( $(gzip -9 -c "$f" | wc -c) / 1024 ))
+              echo "| $(basename "$f") | $raw | $gz |"
+            done
+            echo ""
+            echo "Entry script(s) in index.html:"
+            echo '```'
+            grep -oE '<(script|link)[^>]*(src|href)="/assets/[^"]*"[^>]*>' dist/index.html
+            echo '```'
+            echo "Service worker precache entries: $(grep -o 'url:"[^"]*"' dist/sw.js | wc -l)"
+          } > size-report.md
+          gh pr comment ${{ github.event.pull_request.number }} --repo ${{ github.repository }} --body-file size-report.md

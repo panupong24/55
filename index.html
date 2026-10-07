@@ -40,10 +40,9 @@
     <meta name="twitter:url" content="https://www.gaykub.online/" />
     <meta name="twitter:image" content="https://www.gaykub.online/og-image.jpg" />
 
-    <!-- Font preconnect -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <!-- Hero image is the Largest Contentful Paint: start downloading it before the JS runs.
+         (Google Fonts are only needed for the share card and are loaded on demand there.) -->
+    <link rel="preload" as="image" type="image/webp" fetchpriority="high" href="/src/assets/images/hero_rainbow_quiz_1790434208133.webp" />
 
     <!-- Schema.org Structured Data -->
     <script type="application/ld+json">

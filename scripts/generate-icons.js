@@ -123,7 +123,9 @@ async function run() {
 
   // Social share image: exactly 1200x630 JPEG (matches og:image:width/height)
   const heroSrc = path.resolve('src/assets/images/hero_rainbow_quiz_1790434208133.webp');
-  if (fs.existsSync(heroSrc)) {
+  // The hero source is only 800px wide now, so keep the committed 1200x630 og-image.jpg
+  // instead of upscaling it. Delete public/og-image.jpg to force regeneration.
+  if (fs.existsSync(heroSrc) && !fs.existsSync(path.join(publicDir, 'og-image.jpg'))) {
     await sharp(heroSrc)
       .resize(1200, 630, { fit: 'cover' })
       .jpeg({ quality: 82, progressive: true })

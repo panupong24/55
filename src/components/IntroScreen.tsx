@@ -10,7 +10,6 @@ import {
   Play,
   RotateCcw,
 } from 'lucide-react';
-import { motion } from 'motion/react';
 import { sound } from '../utils/audio';
 import { PWAInstallButton } from './PWAInstallButton';
 import { useLanguage } from '../i18n/LanguageContext';
@@ -48,18 +47,19 @@ export const IntroScreen: React.FC<Props> = ({
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-6 sm:py-10">
-      <motion.div
-        initial={{ opacity: 0, y: 15 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.35 }}
-        className="space-y-6 sm:space-y-8"
-      >
+      {/* No fade-in here: the hero image is the Largest Contentful Paint,
+          so it must be visible on the very first frame. */}
+      <div className="space-y-6 sm:space-y-8">
         {/* Hero Visual Asset */}
         <div className="relative w-full aspect-[16/9] rounded-3xl overflow-hidden border-2 border-pink-500/30 shadow-2xl shadow-purple-500/20 bg-slate-900 group">
           {!heroFailed ? (
             <img
               src={heroImage}
               alt="Rainbow Vibe Quiz Hero"
+              width={800}
+              height={447}
+              fetchPriority="high"
+              decoding="async"
               referrerPolicy="no-referrer"
               onError={() => setHeroFailed(true)}
               className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
@@ -209,7 +209,7 @@ export const IntroScreen: React.FC<Props> = ({
             <PWAInstallButton variant="prominent" />
           </div>
         </div>
-      </motion.div>
+      </div>
     </div>
   );
 };

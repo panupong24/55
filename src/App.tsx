@@ -2,20 +2,35 @@ import React, { useState, useEffect, useCallback, useMemo, lazy, Suspense } from
 import { Option } from './types';
 import { Navbar } from './components/Navbar';
 import { IntroScreen } from './components/IntroScreen';
-import { QuestionScreen } from './components/QuestionScreen';
-import { ResultScreen } from './components/ResultScreen';
-import { ShareModal } from './components/ShareModal';
 import { OfflineIndicator } from './components/OfflineIndicator';
-import { ResetConfirmModal } from './components/ResetConfirmModal';
-import { ReportModal } from './components/ReportModal';
 import { quizStorage, QuizProgress } from './utils/quizStorage';
 import { useLanguage } from './i18n/LanguageContext';
 import { AlertTriangle } from 'lucide-react';
 
-// Admin panel is only needed on /admin, so keep it out of the main bundle
+// Code-split everything the first screen doesn't need, so the intro paints fast
+// on slow phones. Firestore (reviews/reports), motion, confetti and QR code all
+// live in these chunks instead of the main bundle.
+const loadQuestionScreen = () => import('./components/QuestionScreen');
+const loadResultScreen = () => import('./components/ResultScreen');
+const QuestionScreen = lazy(() => loadQuestionScreen().then((m) => ({ default: m.QuestionScreen })));
+const ResultScreen = lazy(() => loadResultScreen().then((m) => ({ default: m.ResultScreen })));
+const ShareModal = lazy(() => import('./components/ShareModal').then((m) => ({ default: m.ShareModal })));
+const ResetConfirmModal = lazy(() =>
+  import('./components/ResetConfirmModal').then((m) => ({ default: m.ResetConfirmModal })),
+);
+const ReportModal = lazy(() => import('./components/ReportModal').then((m) => ({ default: m.ReportModal })));
 const AdminPage = lazy(() =>
   import('./pages/AdminPage').then((m) => ({ default: m.AdminPage })),
 );
+
+/** Mount a lazy modal only after it is first opened, then keep it mounted (for exit animations). */
+function useOpenedOnce(isOpen: boolean): boolean {
+  const [opened, setOpened] = useState(isOpen);
+  useEffect(() => {
+    if (isOpen) setOpened(true);
+  }, [isOpen]);
+  return opened || isOpen;
+}
 
 type AppStep = 'INTRO' | 'QUIZ' | 'RESULT';
 
@@ -83,6 +98,17 @@ export default function App() {
   const [isShareOpen, setIsShareOpen] = useState(false);
   const [isResetModalOpen, setIsResetModalOpen] = useState(false);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const shareMounted = useOpenedOnce(isShareOpen);
+  const resetMounted = useOpenedOnce(isResetModalOpen);
+  const reportMounted = useOpenedOnce(isReportModalOpen);
+
+  // Warm up the next screen's chunk while the user is still reading this one
+  useEffect(() => {
+    const prefetch = step === 'INTRO' ? loadQuestionScreen : loadResultScreen;
+    const w = window as Window & { requestIdleCallback?: (cb: () => void) => number };
+    if (w.requestIdleCallback) w.requestIdleCallback(() => void prefetch());
+    else setTimeout(() => void prefetch(), 1500);
+  }, [step]);
   const [reportTargetComment, setReportTargetComment] = useState<{
     id: string;
     comment: string;
@@ -326,6 +352,7 @@ export default function App() {
           />
         )}
 
+        <Suspense fallback={<div className="min-h-[60vh]" />}>
         {step === 'QUIZ' && (
           <QuestionScreen
             question={currentQuestion}
@@ -356,9 +383,12 @@ export default function App() {
             onOpenReportModal={handleOpenReportModal}
           />
         )}
+        </Suspense>
       </main>
 
+      <Suspense fallback={null}>
       {/* Share / Publish Modal */}
+      {shareMounted && (
       <ShareModal
         isOpen={isShareOpen}
         onClose={() => setIsShareOpen(false)}
@@ -366,8 +396,10 @@ export default function App() {
         tier={shareConfig.tier}
         initialTab={shareConfig.initialTab}
       />
+      )}
 
       {/* Reset Confirmation Modal */}
+      {resetMounted && (
       <ResetConfirmModal
         isOpen={isResetModalOpen}
         onClose={() => setIsResetModalOpen(false)}
@@ -375,8 +407,10 @@ export default function App() {
         answeredCount={answeredCount}
         totalQuestions={questions.length}
       />
+      )}
 
       {/* Report / Feedback Modal */}
+      {reportMounted && (
       <ReportModal
         isOpen={isReportModalOpen}
         onClose={() => {
@@ -385,6 +419,8 @@ export default function App() {
         }}
         targetComment={reportTargetComment}
       />
+      )}
+      </Suspense>
 
       {/* Clean Public Footer (Strictly NO Admin button, login link, or email) */}
       <footer className="py-5 border-t border-pink-500/20 text-center text-xs text-slate-400 relative z-10 bg-slate-950/80 backdrop-blur-md">
