@@ -81,7 +81,42 @@
     <!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "06758f93c48a45f692eb00b3fc73c68c"}'></script><!-- End Cloudflare Web Analytics -->
   </head>
   <body class="bg-slate-950 text-slate-100 antialiased selection:bg-pink-500 selection:text-white min-h-screen">
-    <div id="root"></div>
+    <div id="root">
+      <!-- Static first-paint shell: same layout as the intro screen's header + hero, so the
+           hero (the LCP element) can paint before React loads. React replaces it on mount. -->
+      <div id="app-shell" class="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans relative overflow-x-hidden" aria-hidden="true">
+        <div class="sticky top-0 z-50 w-full bg-slate-950/85 border-b border-pink-500/20">
+          <div class="w-full h-1 rainbow-bg"></div>
+          <div class="max-w-4xl mx-auto px-4 sm:px-6 h-16 flex items-center">
+            <span class="text-lg sm:text-xl font-bold tracking-tight text-white flex items-center gap-2">
+              <span class="text-2xl">🌈</span>
+              <span class="font-black text-lg sm:text-2xl rainbow-text tracking-tight">Rainbow Vibe</span>
+            </span>
+          </div>
+        </div>
+        <main class="flex-1 flex flex-col relative z-10">
+          <div class="max-w-3xl w-full mx-auto px-4 py-6 sm:py-10">
+            <div class="relative w-full aspect-[16/9] rounded-3xl overflow-hidden border-2 border-pink-500/30 shadow-2xl shadow-purple-500/20 bg-slate-900">
+              <img src="/src/assets/images/hero_rainbow_quiz_1790434208133.webp" alt="" width="800" height="447" fetchpriority="high" class="w-full h-full object-cover" />
+              <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent"></div>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+    <script>
+      // The shell only matches the intro screen; drop it for /admin or a resumed quiz.
+      (function () {
+        try {
+          var p = (location.search.indexOf('?/') === 0 ? location.search.slice(1) : location.pathname).toLowerCase();
+          var saved = JSON.parse(localStorage.getItem('rainbow_quiz_progress_v1') || 'null');
+          if (p.indexOf('/admin') === 0 || (saved && saved.step && saved.step !== 'INTRO')) {
+            var el = document.getElementById('app-shell');
+            if (el) el.remove();
+          }
+        } catch (e) {}
+      })();
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

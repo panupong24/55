@@ -12,6 +12,8 @@ export default defineConfig(() => {
       tailwindcss(),
       VitePWA({
         registerType: 'autoUpdate',
+        // Load registerSW.js with defer so it doesn't block the first paint
+        injectRegister: 'script-defer',
         includeAssets: [
           'apple-touch-icon.png',
           'icon.svg',
