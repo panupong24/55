@@ -102,12 +102,25 @@ export default function App() {
   const resetMounted = useOpenedOnce(isResetModalOpen);
   const reportMounted = useOpenedOnce(isReportModalOpen);
 
-  // Warm up the next screen's chunk while the user is still reading this one
+  // Warm up the next screen's chunk as soon as the user interacts (or after a
+  // few seconds), so it is ready when needed without competing with first load.
   useEffect(() => {
     const prefetch = step === 'INTRO' ? loadQuestionScreen : loadResultScreen;
-    const w = window as Window & { requestIdleCallback?: (cb: () => void) => number };
-    if (w.requestIdleCallback) w.requestIdleCallback(() => void prefetch());
-    else setTimeout(() => void prefetch(), 1500);
+    let done = false;
+    const run = () => {
+      if (done) return;
+      done = true;
+      void prefetch();
+      cleanup();
+    };
+    const events = ['pointerdown', 'pointerover', 'touchstart', 'keydown', 'scroll'] as const;
+    events.forEach((e) => window.addEventListener(e, run, { once: true, passive: true }));
+    const timer = window.setTimeout(run, 4000);
+    function cleanup() {
+      events.forEach((e) => window.removeEventListener(e, run));
+      window.clearTimeout(timer);
+    }
+    return cleanup;
   }, [step]);
   const [reportTargetComment, setReportTargetComment] = useState<{
     id: string;

@@ -3,6 +3,7 @@ import { SupportedLang, SUPPORTED_LANGUAGES, DEFAULT_LANGUAGE } from './types';
 import { detectUserLanguage, saveUserLanguage } from './detect';
 import { translations, TranslationDictionary } from './translations';
 import { getLocalizedQuestions, getLocalizedResultTier } from './quizData';
+import { loadLocale } from './locales';
 import { Question, QuizResultTier } from '../types';
 
 interface LanguageContextValue {
@@ -22,11 +23,16 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({
   const [lang, setLangState] = useState<SupportedLang>(() => detectUserLanguage());
 
   const setLang = (newLang: SupportedLang) => {
-    setLangState(newLang);
     saveUserLanguage(newLang);
-    if (typeof document !== 'undefined') {
-      document.documentElement.lang = newLang;
-    }
+    // zh/ja/ko/es are fetched on demand; switch once the text has arrived
+    loadLocale(newLang)
+      .catch((err) => console.warn('Failed to load language', newLang, err))
+      .finally(() => {
+        setLangState(newLang);
+        if (typeof document !== 'undefined') {
+          document.documentElement.lang = newLang;
+        }
+      });
   };
 
   useEffect(() => {
@@ -36,7 +42,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({
   }, [lang]);
 
   const t = useMemo(() => {
-    return translations[lang] || translations[DEFAULT_LANGUAGE];
+    return (translations[lang] || translations[DEFAULT_LANGUAGE])!;
   }, [lang]);
 
   const questions = useMemo(() => {
