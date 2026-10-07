@@ -59,6 +59,38 @@ function wrapAnyText(
   return lines;
 }
 
+const SHARE_FONTS_HREF =
+  'https://fonts.googleapis.com/css2?family=Prompt:ital,wght@0,400;0,600;0,700;0,800;0,900;1,400&family=Noto+Sans+Thai:wght@400;600;700&display=swap';
+
+async function ensureShareFonts(): Promise<void> {
+  if (typeof document === 'undefined') return;
+  if (!document.querySelector(`link[href="${SHARE_FONTS_HREF}"]`)) {
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = SHARE_FONTS_HREF;
+    const loaded = new Promise<void>((resolve) => {
+      link.onload = () => resolve();
+      link.onerror = () => resolve();
+    });
+    document.head.appendChild(link);
+    await loaded;
+  }
+  if (!document.fonts) return;
+  try {
+    // Canvas text does not trigger font downloads, so request each face explicitly.
+    await Promise.race([
+      Promise.all(
+        ['400', '600', '700', '900', 'italic 400'].map((w) =>
+          document.fonts.load(`${w} 32px "Prompt"`, 'กขabc'),
+        ),
+      ),
+      new Promise((resolve) => setTimeout(resolve, 3000)),
+    ]);
+  } catch {
+    // Fall back to system fonts if Google Fonts is unreachable
+  }
+}
+
 export const ShareModal: React.FC<Props> = ({
   isOpen,
   onClose,
@@ -122,10 +154,9 @@ export const ShareModal: React.FC<Props> = ({
     setGeneratingCard(true);
 
     try {
-      // Ensure Google fonts (Prompt, Noto Sans Thai) are completely loaded
-      if (typeof document !== 'undefined' && document.fonts && document.fonts.ready) {
-        await document.fonts.ready;
-      }
+      // Google fonts (Prompt, Noto Sans Thai) are only used on this canvas,
+      // so they are loaded here on demand instead of blocking the first paint.
+      await ensureShareFonts();
 
       const canvas = document.createElement('canvas');
       canvas.width = 1080;
